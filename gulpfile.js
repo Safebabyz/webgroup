@@ -120,7 +120,7 @@ gulp.task("js", function () {
 // Image blur
 gulp.task("images-blur", function () {
   return gulp
-    .src(path.src.blur)
+    .src(path.src.blur, { encoding: false })
     .pipe(
       gm(function (gmfile) {
         return gmfile.blur(10, 10);
@@ -132,7 +132,7 @@ gulp.task("images-blur", function () {
 // image build
 gulp.task("images", function () {
   return gulp
-    .src(path.src.images)
+    .src(path.src.images, { encoding: false })
     .pipe(gulp.dest(path.build.dir + "images/"))
     .pipe(
       bs.reload({
@@ -144,7 +144,7 @@ gulp.task("images", function () {
 // fonts
 gulp.task("fonts", function () {
   return gulp
-    .src(path.src.fonts)
+    .src(path.src.fonts, { encoding: false })
     .pipe(gulp.dest(path.build.dir + "fonts/"))
     .pipe(
       bs.reload({
