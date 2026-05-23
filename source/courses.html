@@ -7,10 +7,13 @@
 <!-- courses -->
 <section class="section">
   <div class="container">
-    @@include('blocks/course.htm')
-    @@include('blocks/course.htm')
+    <div class="row justify-content-center" id="course-list">
+      <!-- Courses will be loaded dynamically from the API -->
+    </div>
   </div>
 </section>
+
+<script src="js/courses.js"></script>
 <!-- /courses -->
 
 @@include('blocks/footer.htm')
