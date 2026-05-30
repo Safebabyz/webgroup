@@ -2,19 +2,321 @@
 
 @@include('blocks/navigation.htm', {"courses": "active"})
 
-@@include('blocks/page-title.htm', {"page-link": "index.html", "page-title" : "Home" , "nasted" : "nasted" , "description" : "Our courses offer a good compromise between the continuous assessment favoured by some universities and the emphasis placed on final exams by others.", "single-page-title": "Our Courses" })
+@@include('blocks/page-title.htm', {"page-link": "index.html", "page-title" : "Home" , "nasted" : "nasted" , "description" : "Find and book the perfect course for you. Filter by category, price, and more.", "single-page-title": "Courses" })
 
-<!-- courses -->
-<section class="section">
+<!-- courses section -->
+<section class="section bg-gray">
   <div class="container">
-    <div class="row justify-content-center" id="course-list">
-      <!-- Courses will be loaded dynamically from the API -->
+
+    <!-- ── Search Bar ── -->
+    <div class="row justify-content-center mb-4">
+      <div class="col-lg-10">
+        <div class="search-wrapper">
+          <div class="input-group search-input-group">
+            <input
+              type="text"
+              id="search-input"
+              class="form-control search-field"
+              placeholder="Search courses by title, category, keyword..."
+              autocomplete="off"
+            >
+            <div class="input-group-append">
+              <button id="search-btn" class="btn btn-primary px-4" type="button">
+                <i class="ti-search mr-1"></i> Search
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <!-- ── Main Layout: Sidebar + Results ── -->
+    <div class="row">
+
+      <!-- ── Filter Sidebar ── -->
+      <div class="col-lg-3 mb-5">
+        <div class="filter-sidebar">
+
+          <!-- Active Filters -->
+          <div id="active-filters-wrap" style="display:none;" class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="filter-label">Active Filters</span>
+              <button id="clear-all-btn" class="btn btn-link btn-sm p-0 text-danger">Clear All</button>
+            </div>
+            <div id="active-filter-tags" class="d-flex flex-wrap" style="gap:6px;"></div>
+          </div>
+
+          <!-- Category Filter -->
+          <div class="filter-block">
+            <h6 class="filter-title">Category</h6>
+            <ul class="list-unstyled filter-list" id="category-list">
+              <li><label class="filter-radio-label"><input type="radio" name="category" value="all" checked> All Categories</label></li>
+              <li><label class="filter-radio-label"><input type="radio" name="category" value="Art"> Art</label></li>
+              <li><label class="filter-radio-label"><input type="radio" name="category" value="Business"> Business</label></li>
+              <li><label class="filter-radio-label"><input type="radio" name="category" value="Design"> Design</label></li>
+              <li><label class="filter-radio-label"><input type="radio" name="category" value="Freelancing"> Freelancing</label></li>
+              <li><label class="filter-radio-label"><input type="radio" name="category" value="Humanities"> Humanities</label></li>
+              <li><label class="filter-radio-label"><input type="radio" name="category" value="Lifestyle"> Lifestyle</label></li>
+              <li><label class="filter-radio-label"><input type="radio" name="category" value="Photography"> Photography</label></li>
+              <li><label class="filter-radio-label"><input type="radio" name="category" value="Programming"> Programming</label></li>
+              <li><label class="filter-radio-label"><input type="radio" name="category" value="Science"> Science</label></li>
+              <li><label class="filter-radio-label"><input type="radio" name="category" value="Technology"> Technology</label></li>
+            </ul>
+          </div>
+
+          <!-- Price Range Filter -->
+          <div class="filter-block">
+            <h6 class="filter-title">Price Range</h6>
+            <div class="price-range-wrap">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="price-label">$<span id="price-min-display">0</span></span>
+                <span class="price-label">$<span id="price-max-display">500</span></span>
+              </div>
+              <input type="range" id="price-min" class="price-slider" min="0" max="500" value="0" step="10">
+              <input type="range" id="price-max" class="price-slider" min="0" max="500" value="500" step="10">
+            </div>
+          </div>
+
+          <!-- Sort By -->
+          <div class="filter-block">
+            <h6 class="filter-title">Sort By</h6>
+            <select id="sort-select" class="form-control sort-select">
+              <option value="default">Default</option>
+              <option value="title-asc">Title (A → Z)</option>
+              <option value="title-desc">Title (Z → A)</option>
+              <option value="price-asc">Price (Low → High)</option>
+              <option value="price-desc">Price (High → Low)</option>
+              <option value="date-desc">Newest First</option>
+              <option value="date-asc">Oldest First</option>
+            </select>
+          </div>
+
+          <!-- Availability Filter -->
+          <div class="filter-block">
+            <h6 class="filter-title">Availability</h6>
+            <ul class="list-unstyled filter-list">
+              <li><label class="filter-check-label"><input type="checkbox" id="filter-available"> Available seats only</label></li>
+              <li><label class="filter-check-label"><input type="checkbox" id="filter-free"> Free courses only</label></li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+      <!-- /sidebar -->
+
+      <!-- ── Results Column ── -->
+      <div class="col-lg-9">
+
+        <!-- results toolbar -->
+        <div class="results-toolbar d-flex justify-content-between align-items-center mb-4" id="results-toolbar" style="display:none!important;">
+          <p class="mb-0 text-muted" id="search-stats"></p>
+          <div class="view-toggle d-flex" style="gap:6px;">
+            <button id="view-grid" class="btn btn-sm view-btn active" title="Grid View"><i class="ti-layout-grid3"></i></button>
+            <button id="view-list" class="btn btn-sm view-btn" title="List View"><i class="ti-list"></i></button>
+          </div>
+        </div>
+
+        <!-- results grid -->
+        <div class="row" id="search-results"></div>
+
+        <!-- no results -->
+        <div id="no-results" class="text-center py-5" style="display:none;">
+          <i class="ti-search" style="font-size:3.5rem;color:#ddd;"></i>
+          <h4 class="text-muted mt-3">No courses found</h4>
+          <p class="text-muted">Try adjusting your filters or search term.</p>
+          <button id="reset-filters-btn" class="btn btn-outline-primary mt-2">Reset Filters</button>
+        </div>
+
+        <!-- pagination -->
+        <div class="row mt-4" id="pagination-row" style="display:none;">
+          <div class="col-12 text-center">
+            <ul class="list-inline pagination-list" id="pagination"></ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- /main layout -->
+
   </div>
 </section>
+<!-- /courses section -->
 
+<style>
+/* ════════════════════════════════
+   Search Bar
+════════════════════════════════ */
+.search-wrapper {
+  box-shadow: 0 8px 30px rgba(0,0,0,.12);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.search-input-group .form-control.search-field {
+  height: 56px;
+  font-size: 1rem;
+  border: none;
+  padding-left: 20px;
+}
+.search-input-group .form-control.search-field:focus { box-shadow: none; }
+.search-input-group .btn { height: 56px; border-radius: 0; font-size: 1rem; }
+
+/* ════════════════════════════════
+   Filter Sidebar
+════════════════════════════════ */
+.filter-sidebar {
+  background: #fff;
+  border: 1px solid #eeeeee;
+  border-radius: 6px;
+  padding: 20px;
+  position: sticky;
+  top: 90px;
+}
+.filter-block {
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+}
+.filter-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.filter-title {
+  font-size: .8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #333;
+  margin-bottom: 12px;
+}
+.filter-label {
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #555;
+  margin-bottom: 8px;
+}
+.filter-list { margin: 0; }
+.filter-list li { margin-bottom: 8px; }
+.filter-radio-label,
+.filter-check-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .875rem;
+  color: #555;
+  cursor: pointer;
+  margin: 0;
+  font-weight: 400;
+  transition: color .15s;
+}
+.filter-radio-label:hover, .filter-check-label:hover { color: var(--primary-color, #f36523); }
+.filter-radio-label input[type="radio"],
+.filter-check-label input[type="checkbox"] { accent-color: var(--primary-color, #f36523); width: 15px; height: 15px; flex-shrink: 0; }
+
+/* Price range */
+.price-slider {
+  width: 100%;
+  accent-color: var(--primary-color, #f36523);
+  margin-bottom: 6px;
+}
+.price-label { font-size: .85rem; color: #555; font-weight: 600; }
+
+/* Sort select */
+.sort-select {
+  font-size: .875rem;
+  border-radius: 4px;
+  border-color: #ddd;
+  height: 38px;
+  color: #555;
+}
+.sort-select:focus { box-shadow: none; border-color: var(--primary-color, #f36523); }
+
+/* Active filter tags */
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(243,101,35,.1);
+  color: var(--primary-color, #f36523);
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: .78rem;
+  font-weight: 600;
+  gap: 5px;
+}
+.filter-tag .remove-tag { cursor: pointer; font-size: .9rem; line-height: 1; }
+.filter-tag .remove-tag:hover { color: #c0392b; }
+
+/* ════════════════════════════════
+   Toolbar & View toggle
+════════════════════════════════ */
+.results-toolbar { flex-wrap: wrap; gap: 8px; }
+.view-btn {
+  width: 34px; height: 34px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 4px;
+  color: #888;
+  transition: all .2s;
+  padding: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.view-btn.active, .view-btn:hover { background: var(--primary-color, #f36523); border-color: var(--primary-color, #f36523); color: #fff; }
+
+/* ════════════════════════════════
+   Course Cards
+════════════════════════════════ */
+.course-card { height: 100%; }
+.course-card .card { height: 100%; border-radius: 4px; transition: transform .2s, box-shadow .2s; }
+.course-card .card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,.12)!important; }
+.course-card .card img { object-fit: cover; height: 200px; }
+
+/* List view */
+#search-results.list-view .course-card { width: 100%; }
+#search-results.list-view .col-item { flex: 0 0 100%; max-width: 100%; }
+#search-results.list-view .card { flex-direction: row; }
+#search-results.list-view .card img { width: 200px; height: auto; flex-shrink: 0; }
+@media (max-width: 575px) {
+  #search-results.list-view .card { flex-direction: column; }
+  #search-results.list-view .card img { width: 100%; height: 180px; }
+}
+
+/* Category badge */
+.category-badge {
+  display: inline-block;
+  background: rgba(243,101,35,.1);
+  color: var(--primary-color, #f36523);
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: .78rem;
+  font-weight: 600;
+}
+
+/* Highlight */
+mark.sh { background: #fff3cd; border-radius: 2px; padding: 0 2px; }
+
+/* ════════════════════════════════
+   Skeleton
+════════════════════════════════ */
+.skeleton-card { background:#fff; border:1px solid #e8e8e8; border-radius:4px; overflow:hidden; margin-bottom:30px; }
+.skeleton-img { height:200px; background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; }
+.skeleton-body { padding:20px; }
+.skeleton-line { height:14px; background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:4px; margin-bottom:10px; }
+.skeleton-line.short { width:60%; }
+.skeleton-line.title { height:20px; width:85%; }
+@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+
+/* ════════════════════════════════
+   Pagination
+════════════════════════════════ */
+.pagination-list li { margin: 0 3px; }
+.page-btn {
+  display:inline-block; width:38px; height:38px; line-height:36px;
+  text-align:center; border:1px solid #ddd; border-radius:4px;
+  cursor:pointer; font-size:.9rem; transition:all .2s; background:#fff;
+}
+.page-btn:hover, .page-btn.active { background:var(--primary-color,#f36523); border-color:var(--primary-color,#f36523); color:#fff; }
+</style>
+
+<script src="js/search.js"></script>
 <script src="js/courses.js"></script>
-<!-- /courses -->
 
 @@include('blocks/footer.htm')
 

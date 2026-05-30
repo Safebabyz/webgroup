@@ -1,9 +1,8 @@
 /* jshint esversion:8, browser:true */
-/* global fetch, URLSearchParams */
+/* global URLSearchParams */
 'use strict';
 
 (function () {
-  var API_BASE     = 'http://localhost:8000/api/courses';
   var ITEMS_PER_PAGE = 6;
 
   // ── State ─────────────────────────────────────────────────
@@ -97,10 +96,11 @@
          +       '</ul>'
          +       '<a href="#!"><h4 class="card-title">' + hl(title, q) + '</h4></a>'
          +       '<p class="card-text mb-3 flex-grow-1">' + hl(desc, q) + '</p>'
-         +       '<div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top">'
+         +       '<div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top">'
          +         '<span class="font-weight-bold text-color">' + price + '</span>'
-         +         (seats ? '<span class="text-muted small"><i class="ti-user mr-1"></i>' + seats + ' students</span>' : '')
+         +         '<button class="btn btn-sm btn-primary enroll-btn" data-course-id="' + course.id + '"><i class="ti-check mr-1"></i>Enroll</button>'
          +       '</div>'
+         +       (seats ? '<div class="text-muted small mt-2"><i class="ti-user mr-1"></i>' + seats + ' students enrolled</div>' : '')
          +     '</div>'
          +   '</div>'
          + '</div>';
@@ -131,6 +131,19 @@
     }
 
     resultsEl.innerHTML = page.map(renderCard).join('');
+
+    // Add enroll button listeners
+    resultsEl.querySelectorAll('.enroll-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        var courseId = this.getAttribute('data-course-id');
+        var course = state.all.find(function (c) { return c.id == courseId; });
+        if (course) {
+          alert('You are enrolling in: ' + course.title + '\n\nPrice: $' + Number(course.price || 0).toFixed(2));
+          // TODO: Connect to booking API
+        }
+      });
+    });
 
     // stats
     var from = start + 1;
@@ -295,39 +308,34 @@
     applyFilters();
   }
 
-  // ── Fetch courses ─────────────────────────────────────────
-  function loadCourses() {
+  function setCourses(courses) {
+    state.all = Array.isArray(courses) ? courses : [];
+
+    var maxPrice = Math.max.apply(null, state.all.map(function (c) { return Number(c.price) || 0; }));
+    if (maxPrice > 0) {
+      var ceil = Math.ceil(maxPrice / 100) * 100;
+      priceMaxEl.max = ceil;
+      priceMinEl.max = ceil;
+      priceMaxEl.value = ceil;
+      state.priceMax = ceil;
+      priceMaxDisp.textContent = ceil;
+    }
+
+    applyFilters();
+  }
+
+  function showError(err) {
+    console.error('Search: failed to load courses', err);
+    resultsEl.innerHTML =
+      '<div class="col-12 text-center py-5">'
+      + '<h4 class="text-danger"><i class="ti-alert mr-2"></i>Could not load courses</h4>'
+      + '<p class="text-muted">Make sure the backend server is running on port 8000.</p>'
+      + '</div>';
+    noResultsEl.style.display = 'none';
+  }
+
+  function showLoading() {
     showSkeleton();
-    fetch(API_BASE)
-      .then(function (res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
-      .then(function (data) {
-        state.all = Array.isArray(data) ? data : [];
-
-        // Auto-detect price max from data
-        var maxPrice = Math.max.apply(null, state.all.map(function (c) { return Number(c.price) || 0; }));
-        if (maxPrice > 0) {
-          var ceil = Math.ceil(maxPrice / 100) * 100;
-          priceMaxEl.max = ceil; priceMinEl.max = ceil;
-          priceMaxEl.value = ceil;
-          state.priceMax = ceil;
-          priceMaxDisp.textContent = ceil;
-        }
-
-        applyFilters();
-      })
-      .catch(function (err) {
-        console.error('Search: failed to load courses', err);
-        resultsEl.innerHTML =
-          '<div class="col-12 text-center py-5">'
-          + '<h4 class="text-danger"><i class="ti-alert mr-2"></i>Could not load courses</h4>'
-          + '<p class="text-muted">Make sure the backend server is running on port 8000.</p>'
-          + '<a href="courses.html" class="btn btn-outline-primary mt-2">Go to Courses</a>'
-          + '</div>';
-        noResultsEl.style.display = 'none';
-      });
   }
 
   // ── Events ────────────────────────────────────────────────
@@ -389,7 +397,10 @@
   var urlQ = new URLSearchParams(window.location.search).get('q') || '';
   if (urlQ) { searchInput.value = urlQ; state.query = urlQ; }
 
-  // ── Init ──────────────────────────────────────────────────
-  loadCourses();
+  window.searchApp = {
+    setCourses: setCourses,
+    showError: showError,
+    showLoading: showLoading
+  };
 
 })();
