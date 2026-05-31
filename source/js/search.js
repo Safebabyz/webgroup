@@ -1,4 +1,4 @@
-/* jshint esversion:8, browser:true */
+/* jshint esversion:8, browser:true, globalstrict:true */
 /* global URLSearchParams */
 'use strict';
 

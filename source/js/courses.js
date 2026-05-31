@@ -1,6 +1,11 @@
+/* jshint esversion:8, browser:true, globalstrict:true */
+'use strict';
+
 document.addEventListener('DOMContentLoaded', () => {
   var resultsEl = document.getElementById('search-results');
-  if (!resultsEl) return;
+  if (!resultsEl) {
+    return;
+  }
 
   if (window.searchApp && typeof window.searchApp.showLoading === 'function') {
     window.searchApp.showLoading();

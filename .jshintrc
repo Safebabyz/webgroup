@@ -30,9 +30,8 @@
   "boss": false,
   "debug": false,
   "eqnull": false,
-  "es3": true,
-  "es5": false,
-  "esnext": true,
+  "es3": false,
+  "esversion": 8,
   "moz": false,
 
   "evil": true,
