@@ -12,6 +12,7 @@ CREATE TABLE courses (
     description TEXT,
     price DECIMAL,
     max_capacity INT,
+    current_capacity INT,
     course_date DATE,
     start_time TIME,
     end_time TIME,

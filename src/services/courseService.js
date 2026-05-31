@@ -7,10 +7,8 @@ const db = new sqlite3.Database(dbPath);
 exports.getAllCourses = () => {
     return new Promise((resolve, reject) => {
         const query = `
-            SELECT c.*, COUNT(bi.id) AS current_bookings
+            SELECT c.*
             FROM courses c
-            LEFT JOIN booking_items bi ON c.id = bi.course_id
-            GROUP BY c.id
         `;
         db.all(query, [], (err, rows) => {
             if (err) {
