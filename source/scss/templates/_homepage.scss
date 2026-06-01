@@ -55,6 +55,20 @@
   }
 }
 
+.course-card--full .card {
+  opacity: 0.65;
+  filter: grayscale(20%);
+  pointer-events: none;
+}
+
+.course-card--full .card-body {
+  opacity: 0.95;
+}
+
+.course-card--full .enroll-btn {
+  cursor: not-allowed;
+}
+
 /* /course */
 
 /* success story */

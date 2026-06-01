@@ -47,12 +47,76 @@
   // ── format time (HH:MM) ──
   function formatTime(t) {
     if (!t) return '';
-    // trim seconds if present e.g. "09:00:00" → "09:00"
-    return t.substring(0, 5);
+    var parts = String(t).split(':');
+    return parts.slice(0, 2).join(':');
+  }
+
+  function parseMinutes(time) {
+    if (!time) return null;
+    var parts = String(time).split(':').slice(0, 2);
+    var hour = Number(parts[0]);
+    var minute = Number(parts[1] || 0);
+    if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+    return hour * 60 + minute;
+  }
+
+  function timesOverlap(startA, endA, startB, endB) {
+    var a = parseMinutes(startA);
+    var b = parseMinutes(endA);
+    var c = parseMinutes(startB);
+    var d = parseMinutes(endB);
+    if (a === null || b === null || c === null || d === null) return false;
+    return a < d && c < b;
+  }
+
+  function getBookingKey(b) {
+    return [b.course_date || '', formatTime(b.start_time), formatTime(b.end_time)].join('|');
+  }
+
+  function formatConflictTitles(titles) {
+    if (!titles || !titles.length) return '';
+    if (titles.length === 1) return titles[0];
+    if (titles.length === 2) return titles[0] + ' and ' + titles[1];
+    return titles.slice(0, -1).join(', ') + ', and ' + titles[titles.length - 1];
+  }
+
+  function computeBookingStatuses(bookings) {
+    var statusMap = {};
+
+    bookings.forEach(function (b) {
+      statusMap[b.id] = {
+        status: (b.max_capacity != null && b.current_capacity != null && Number(b.current_capacity) >= Number(b.max_capacity)) ? 'full' : null,
+        conflicts: []
+      };
+    });
+
+    for (var i = 0; i < bookings.length; i++) {
+      for (var j = i + 1; j < bookings.length; j++) {
+        var a = bookings[i];
+        var b = bookings[j];
+        if (!a.course_date || !b.course_date || a.course_date !== b.course_date) continue;
+        if (timesOverlap(formatTime(a.start_time), formatTime(a.end_time), formatTime(b.start_time), formatTime(b.end_time))) {
+          if (statusMap[a.id].status !== 'full') statusMap[a.id].status = 'conflict';
+          if (statusMap[b.id].status !== 'full') statusMap[b.id].status = 'conflict';
+          statusMap[a.id].conflicts.push(b.title);
+          statusMap[b.id].conflicts.push(a.title);
+        }
+      }
+    }
+
+    Object.keys(statusMap).forEach(function (id) {
+      if (statusMap[id].status === 'conflict') {
+        statusMap[id].conflicts = statusMap[id].conflicts.filter(function (value, index, self) {
+          return self.indexOf(value) === index;
+        });
+      }
+    });
+
+    return statusMap;
   }
 
   // ── render card ──
-  function renderCard(b, index) {
+  function renderCard(b, index, status) {
     var price    = Number(b.price) || 0;
     var isFree   = price === 0;
     var priceStr = isFree ? 'FREE' : '$' + price.toFixed(2);
@@ -69,6 +133,17 @@
                 : null;
 
     var imgSrc = b.image_url || 'images/courses/course-1.jpg';
+
+    var alertHtml = '';
+    if (status && status.status === 'full') {
+      alertHtml = '<div class="bk-alert bk-alert-full"><i class="ti-alert mr-1"></i>This course is full and has reached capacity.</div>';
+    } else if (status && status.status === 'conflict') {
+      var titleList = formatConflictTitles(status.conflicts || []);
+      var conflictText = titleList
+        ? 'Schedule conflicts with ' + titleList + '.'
+        : 'Schedule conflict detected with another booking.';
+      alertHtml = '<div class="bk-alert bk-alert-conflict"><i class="ti-alert mr-1"></i>' + conflictText + '</div>';
+    }
 
     // build time/date block
     var metaHtml = '';
@@ -94,7 +169,8 @@
                + '</div>';
     }
 
-    return '<div class="booking-card" id="bcard-' + b.id + '">'
+    return '<div class="booking-card' + (status ? ' booking-card--' + status : '') + '" id="bcard-' + b.id + '">'
+         +     alertHtml
          +   '<div class="bk-img-wrap">'
          +     '<img src="' + imgSrc + '" alt="' + b.title + '" class="bk-img">'
          +     '<span class="bk-cat-pill">' + b.category + '</span>'
@@ -151,7 +227,8 @@
     }
 
     if (emptyEl) emptyEl.style.display = 'none';
-    listEl.innerHTML = bookings.map(renderCard).join('');
+    var statuses = computeBookingStatuses(bookings);
+    listEl.innerHTML = bookings.map(function (b, index) { return renderCard(b, index, statuses[b.id]); }).join('');
 
     // bind remove buttons
     listEl.querySelectorAll('.remove-booking-btn').forEach(function (btn) {

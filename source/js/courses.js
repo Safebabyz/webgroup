@@ -75,25 +75,36 @@
     var category = course.category || 'General';
     var desc     = (course.description || '').substring(0, 110) + '…';
     var price    = course.price != null ? '$' + Number(course.price).toFixed(2) : 'Free';
-    var dateStr  = course.course_date || '';
-    var imgSrc   = course.image_url || 'images/courses/course-1.jpg';
-    var seats    = (course.current_capacity != null && course.max_capacity != null)
+    var dateStr   = course.course_date || '';
+    var timeStr   = (course.start_time || '' ) && (course.end_time || '')
+                 ? normalizeTime(course.start_time) + ' – ' + normalizeTime(course.end_time)
+                 : '';
+    var dateTime  = dateStr && timeStr ? dateStr + ' | ' + timeStr : dateStr || timeStr;
+    var imgSrc    = course.image_url || 'images/courses/course-1.jpg';
+    var seats     = (course.current_capacity != null && course.max_capacity != null)
                    ? course.current_capacity + '/' + course.max_capacity
                    : '';
+    var isFull = course.current_capacity != null && course.max_capacity != null && Number(course.current_capacity) >= Number(course.max_capacity);
+    var cardClass = 'col-lg-4 col-sm-6 col-item mb-4 course-card' + (isFull ? ' course-card--full' : '');
+    var buttonClass = 'btn btn-sm ' + (isFull ? 'btn-secondary' : 'btn-primary') + ' enroll-btn';
+    var buttonLabel = isFull
+      ? '<i class="ti-lock mr-1"></i>Full'
+      : '<i class="ti-check mr-1"></i>Enroll';
+    var buttonState = isFull ? ' disabled' : '';
 
-    return '<div class="col-lg-4 col-sm-6 col-item mb-4 course-card">'
+    return '<div class="' + cardClass + '">'
          +   '<div class="card p-0 border-primary rounded-0 hover-shadow">'
          +     '<img class="card-img-top rounded-0" src="' + imgSrc + '" alt="' + title + '">' 
          +     '<div class="card-body d-flex flex-column">'
          +       '<ul class="list-inline mb-2">'
-         +         '<li class="list-inline-item"><i class="ti-calendar mr-1 text-color"></i>' + dateStr + '</li>'
-         +         '<li class="list-inline-item"><span class="category-badge">' + hl(category, q) + '</span></li>'
+         +         '<li class="list-inline-item"><i class="ti-calendar mr-1 text-color"></i>' + dateTime + '</li>'
          +       '</ul>'
          +       '<a href="#!"><h4 class="card-title">' + hl(title, q) + '</h4></a>'
+         +       '<p class="mb-2"><span class="category-badge">' + hl(category, q) + '</span></p>'
          +       '<p class="card-text mb-3 flex-grow-1">' + hl(desc, q) + '</p>'
          +       '<div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top">'
          +         '<span class="font-weight-bold text-color">' + price + '</span>'
-         +         '<button class="btn btn-sm btn-primary enroll-btn" data-course-id="' + course.id + '"><i class="ti-check mr-1"></i>Enroll</button>'
+         +         '<button class="' + buttonClass + '" data-course-id="' + course.id + '"' + buttonState + '>' + buttonLabel + '</button>'
          +       '</div>'
          +       (seats ? '<div class="text-muted small mt-2"><i class="ti-user mr-1"></i>' + seats + ' students enrolled</div>' : '')
          +     '</div>'
@@ -154,6 +165,18 @@
           showBookingToast('You have already enrolled in "' + course.title + '".', 'info');
           return;
         }
+
+        var validation = validateBooking(course, bookings);
+        if (validation) {
+          var message = validation.message;
+          if (validation.reason === 'schedule' && validation.conflicts && validation.conflicts.length) {
+            message = 'This course conflicts with ' + formatConflictTitles(validation.conflicts) + '.';
+          }
+          showBookingToast(message, 'danger');
+          console.warn('Booking conflict:', validation);
+          return;
+        }
+
         bookings.push({
           id:               course.id,
           title:            course.title,
@@ -357,6 +380,76 @@
     }
 
     applyFilters();
+  }
+
+  function formatConflictTitles(titles) {
+    if (!titles || !titles.length) return '';
+    if (titles.length === 1) return titles[0];
+    if (titles.length === 2) return titles[0] + ' and ' + titles[1];
+    return titles.slice(0, -1).join(', ') + ', and ' + titles[titles.length - 1];
+  }
+
+  function createBookingConflict(status, message, conflicts) {
+    return {
+      status: 409,
+      error: 'Conflict',
+      reason: status,
+      message: message,
+      conflicts: Array.isArray(conflicts) ? conflicts : []
+    };
+  }
+
+  function normalizeTime(t) {
+    if (!t) return '';
+    return String(t).split(':').slice(0, 2).join(':');
+  }
+
+  function parseMinutes(time) {
+    if (!time) return null;
+    var parts = String(time).split(':').slice(0, 2);
+    var hour = Number(parts[0]);
+    var minute = Number(parts[1] || 0);
+    if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+    return hour * 60 + minute;
+  }
+
+  function timesOverlap(startA, endA, startB, endB) {
+    var a = parseMinutes(startA);
+    var b = parseMinutes(endA);
+    var c = parseMinutes(startB);
+    var d = parseMinutes(endB);
+    if (a === null || b === null || c === null || d === null) return false;
+    return a < d && c < b;
+  }
+
+  function validateBooking(course, bookings) {
+    if (course.max_capacity != null && course.current_capacity != null && Number(course.current_capacity) >= Number(course.max_capacity)) {
+      return createBookingConflict('full', 'This course is full and cannot be booked.');
+    }
+
+    var newDate = course.course_date || '';
+    var newStart = normalizeTime(course.start_time);
+    var newEnd = normalizeTime(course.end_time);
+    if (newDate && newStart && newEnd) {
+      var conflicts = bookings.reduce(function (acc, b) {
+        if ((b.course_date || '') !== newDate) return acc;
+        if (timesOverlap(newStart, newEnd, normalizeTime(b.start_time), normalizeTime(b.end_time))) {
+          acc.push(b.title || 'another course');
+        }
+        return acc;
+      }, []);
+
+      if (conflicts.length) {
+        var unique = conflicts.filter(function (value, index, self) {
+          return self.indexOf(value) === index;
+        });
+        var titles = formatConflictTitles(unique);
+        var msg = 'This course conflicts with ' + titles + '.';
+        return createBookingConflict('schedule', msg, unique);
+      }
+    }
+
+    return null;
   }
 
   function showError(err) {
