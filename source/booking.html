@@ -1,0 +1,248 @@
+@@include('header.htm')
+
+@@include('blocks/navigation.htm', {"booking": "active"})
+
+@@include('blocks/page-title.htm', {"page-link": "index.html", "page-title" : "Home" , "nasted" : "nasted" , "description" : "View and manage your enrolled courses.", "single-page-title": "My Bookings" })
+
+<!-- booking section -->
+<section class="section bg-gray">
+  <div class="container">
+
+    <!-- Login Wall (shown when not logged in) -->
+    <div id="booking-login-wall" style="display:none;" class="text-center py-5">
+      <div class="booking-login-card">
+        <div class="booking-login-icon">
+          <i class="ti-lock"></i>
+        </div>
+        <h3 class="mt-4 mb-2">Login Required</h3>
+        <p class="text-muted mb-4">Please login to view your booking list.</p>
+        <a href="#loginModal" class="btn btn-primary px-5" data-toggle="modal" data-target="#loginModal">
+          <i class="ti-user mr-2"></i>Login Now
+        </a>
+      </div>
+    </div>
+
+    <!-- Booking Header -->
+    <div class="booking-header d-flex justify-content-between align-items-center mb-4" id="booking-header-bar">
+      <div>
+        <h4 class="mb-1 booking-section-title">
+          <i class="ti-bookmark mr-2 text-color"></i>My Enrolled Courses
+          <span class="booking-count-pill" id="booking-count">0</span>
+        </h4>
+        <p class="text-muted mb-0" style="font-size:.875rem;">Courses you have enrolled in are saved here.</p>
+      </div>
+      <div class="d-flex align-items-center" style="gap:12px;">
+        <div class="booking-total-wrap">
+          <span class="booking-total-label">Total Value</span>
+          <span class="booking-total-value" id="booking-total">$0.00</span>
+        </div>
+        <a href="courses.html" class="btn btn-outline-primary btn-sm">
+          <i class="ti-plus mr-1"></i>Browse Courses
+        </a>
+        <button id="booking-clear-all" class="btn btn-outline-danger btn-sm">
+          <i class="ti-trash mr-1"></i>Clear All
+        </button>
+      </div>
+    </div>
+
+    <!-- Booking List -->
+    <div id="booking-list"></div>
+
+    <!-- Empty State -->
+    <div id="booking-empty" class="text-center py-5" style="display:none;">
+      <div class="booking-empty-wrap">
+        <i class="ti-bookmark-alt booking-empty-icon"></i>
+        <h4 class="mt-4 mb-2">No bookings yet</h4>
+        <p class="text-muted mb-4">You haven't enrolled in any courses. Start exploring now!</p>
+        <a href="courses.html" class="btn btn-primary px-5">
+          <i class="ti-search mr-2"></i>Browse Courses
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>
+<!-- /booking section -->
+
+<style>
+/* ═══════════════════════════════════
+   Booking Section Header
+═══════════════════════════════════ */
+.booking-section-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #333;
+}
+.booking-count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f36523;
+  color: #fff;
+  border-radius: 50px;
+  padding: 2px 10px;
+  font-size: .8rem;
+  font-weight: 700;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+.booking-total-wrap {
+  text-align: right;
+}
+.booking-total-label {
+  display: block;
+  font-size: .72rem;
+  color: #888;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.booking-total-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f36523;
+}
+
+/* ═══════════════════════════════════
+   Booking Card
+═══════════════════════════════════ */
+.booking-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #eeeeee;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 18px;
+  box-shadow: 0 3px 14px rgba(0,0,0,.06);
+  transition: transform .2s, box-shadow .2s;
+  gap: 0;
+}
+.booking-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+}
+.booking-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 200px;
+  height: 140px;
+}
+.booking-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.booking-cat-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(243,101,35,.9);
+  color: #fff;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: .72rem;
+  font-weight: 700;
+}
+.booking-info {
+  flex: 1;
+  padding: 18px 22px;
+  min-width: 0;
+}
+.booking-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.booking-desc {
+  font-size: .855rem;
+  color: #666;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.booking-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: .8rem;
+  color: #888;
+}
+.booking-meta span { display: flex; align-items: center; }
+.booking-price-col {
+  flex-shrink: 0;
+  padding: 18px 22px;
+  text-align: center;
+  border-left: 1px solid #f0f0f0;
+  min-width: 120px;
+}
+.booking-price {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #f36523;
+  margin-bottom: 8px;
+}
+
+/* ═══════════════════════════════════
+   Login Wall Card
+═══════════════════════════════════ */
+.booking-login-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 60px 40px;
+  max-width: 420px;
+  margin: 0 auto;
+  box-shadow: 0 8px 40px rgba(0,0,0,.09);
+}
+.booking-login-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(243,101,35,.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+.booking-login-icon i {
+  font-size: 2.2rem;
+  color: #f36523;
+}
+
+/* ═══════════════════════════════════
+   Empty State
+═══════════════════════════════════ */
+.booking-empty-wrap {
+  background: #fff;
+  border-radius: 16px;
+  padding: 60px 40px;
+  max-width: 460px;
+  margin: 0 auto;
+  box-shadow: 0 4px 24px rgba(0,0,0,.07);
+}
+.booking-empty-icon {
+  font-size: 3.5rem;
+  color: #ddd;
+  display: block;
+}
+
+/* ═══════════════════════════════════
+   Responsive
+═══════════════════════════════════ */
+@media (max-width: 767px) {
+  .booking-card { flex-direction: column; }
+  .booking-thumb { width: 100%; height: 180px; }
+  .booking-price-col { width: 100%; border-left: none; border-top: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+  .booking-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+</style>
+
+<script src="js/booking.js"></script>
+
+@@include('blocks/footer.htm')
+
+@@include('footer.htm')

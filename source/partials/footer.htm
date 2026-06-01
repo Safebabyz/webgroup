@@ -17,6 +17,18 @@
 <!-- Main Script -->
 <script src="js/script.js"></script>
 <script src="js/auth.js"></script>
+<script>
+// Update booking badge on every page
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    var badge = document.getElementById('booking-nav-badge');
+    if (!badge) return;
+    var count = JSON.parse(localStorage.getItem('bookingList') || '[]').length;
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'inline-flex' : 'none';
+  });
+})();
+</script>
 
 </body>
 </html>

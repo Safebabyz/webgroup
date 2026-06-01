@@ -130,10 +130,60 @@
         e.preventDefault();
         var courseId = this.getAttribute('data-course-id');
         var course = state.all.find(function (c) { return c.id == courseId; });
-        if (course) {
-          alert('You are enrolling in: ' + course.title + '\n\nPrice: $' + Number(course.price || 0).toFixed(2));
+        if (!course) return;
+
+        // ── เช็คว่า login อยู่ไหม ──
+        var token = localStorage.getItem('authToken');
+        if (!token) {
+          // ยังไม่ login → เปิด login modal
+          var loginModal = document.getElementById('loginModal');
+          if (loginModal && window.jQuery) {
+            window.jQuery('#loginModal').modal('show');
+          } else if (loginModal) {
+            loginModal.style.display = 'flex';
+          }
+          // แสดง toast แจ้งเตือน
+          showBookingToast('Please login to enroll in a course.', 'warning');
+          return;
         }
+
+        // ── login แล้ว → บันทึกลง bookingList ──
+        var bookings = JSON.parse(localStorage.getItem('bookingList') || '[]');
+        var alreadyBooked = bookings.some(function (b) { return b.id == course.id; });
+        if (alreadyBooked) {
+          showBookingToast('You have already enrolled in "' + course.title + '".', 'info');
+          return;
+        }
+        bookings.push({
+          id:           course.id,
+          title:        course.title,
+          category:     course.category || 'General',
+          price:        course.price || 0,
+          image_url:    course.image_url || 'images/courses/course-1.jpg',
+          course_date:  course.course_date || '',
+          description:  course.description || '',
+          enrolledAt:   new Date().toISOString()
+        });
+        localStorage.setItem('bookingList', JSON.stringify(bookings));
+
+        // อัปเดตปุ่มและ badge
+        this.innerHTML = '<i class="ti-check mr-1"></i>Enrolled';
+        this.disabled = true;
+        this.classList.replace('btn-primary', 'btn-success');
+        updateBookingBadge();
+        showBookingToast('"' + course.title + '" added to your bookings!', 'success');
       });
+    });
+
+    // ── อัปเดตสถานะปุ่มที่ enroll แล้ว ──
+    var bookings = JSON.parse(localStorage.getItem('bookingList') || '[]');
+    var bookedIds = bookings.map(function (b) { return String(b.id); });
+    resultsEl.querySelectorAll('.enroll-btn').forEach(function (btn) {
+      if (bookedIds.indexOf(btn.getAttribute('data-course-id')) !== -1) {
+        btn.innerHTML = '<i class="ti-check mr-1"></i>Enrolled';
+        btn.disabled = true;
+        btn.classList.replace('btn-primary', 'btn-success');
+      }
     });
 
     var from = start + 1;
@@ -389,5 +439,53 @@
     var urlQ = new URLSearchParams(window.location.search).get('q') || '';
     if (urlQ) { searchInput.value = urlQ; state.query = urlQ; }
     fetchCourses();
+    updateBookingBadge();
   });
+
+  // ── Toast Notification ──
+  function showBookingToast(msg, type) {
+    var existing = document.getElementById('booking-toast');
+    if (existing) existing.remove();
+
+    var colors = {
+      success: { bg: '#28a745', icon: 'ti-check-box' },
+      warning: { bg: '#f36523', icon: 'ti-lock' },
+      info:    { bg: '#17a2b8', icon: 'ti-info-alt' }
+    };
+    var c = colors[type] || colors.info;
+
+    var toast = document.createElement('div');
+    toast.id = 'booking-toast';
+    toast.style.cssText = [
+      'position:fixed', 'bottom:28px', 'right:28px', 'z-index:9999',
+      'background:' + c.bg, 'color:#fff',
+      'padding:14px 22px', 'border-radius:8px',
+      'box-shadow:0 6px 24px rgba(0,0,0,.25)',
+      'font-size:.92rem', 'font-weight:600',
+      'display:flex', 'align-items:center', 'gap:10px',
+      'opacity:0', 'transform:translateY(20px)',
+      'transition:opacity .3s,transform .3s', 'max-width:340px'
+    ].join(';');
+    toast.innerHTML = '<i class="' + c.icon + '" style="font-size:1.1rem;flex-shrink:0;"></i><span>' + msg + '</span>';
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(function () {
+      toast.style.opacity  = '1';
+      toast.style.transform = 'translateY(0)';
+    });
+    setTimeout(function () {
+      toast.style.opacity   = '0';
+      toast.style.transform = 'translateY(20px)';
+      setTimeout(function () { if (toast.parentNode) toast.remove(); }, 350);
+    }, 3200);
+  }
+
+  // ── Badge count บน nav link ──
+  function updateBookingBadge() {
+    var badge = document.getElementById('booking-nav-badge');
+    if (!badge) return;
+    var count = JSON.parse(localStorage.getItem('bookingList') || '[]').length;
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'inline-flex' : 'none';
+  }
 })();
