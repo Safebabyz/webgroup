@@ -44,31 +44,74 @@
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
+  // ── format time (HH:MM) ──
+  function formatTime(t) {
+    if (!t) return '';
+    // trim seconds if present e.g. "09:00:00" → "09:00"
+    return t.substring(0, 5);
+  }
+
   // ── render card ──
   function renderCard(b, index) {
-    var price = Number(b.price) || 0;
-    var priceStr = price > 0 ? '$' + price.toFixed(2) : '<span class="badge badge-success">Free</span>';
-    var enrolledDate = formatDate(b.enrolledAt);
-    var courseDate   = b.course_date ? formatDate(b.course_date) : '—';
+    var price    = Number(b.price) || 0;
+    var isFree   = price === 0;
+    var priceStr = isFree ? 'FREE' : '$' + price.toFixed(2);
+    var priceClass = isFree ? 'booking-price free' : 'booking-price';
 
-    return '<div class="booking-card" id="bcard-' + b.id + '" data-aos="fade-up" data-aos-delay="' + (index * 60) + '">'
-         +   '<div class="booking-thumb">'
-         +     '<img src="' + (b.image_url || 'images/courses/course-1.jpg') + '" alt="' + b.title + '">'
-         +     '<span class="booking-cat-badge">' + b.category + '</span>'
+    var courseDate = b.course_date ? formatDate(b.course_date) : null;
+    var startTime  = formatTime(b.start_time);
+    var endTime    = formatTime(b.end_time);
+    var timeRange  = (startTime && endTime) ? startTime + ' – ' + endTime
+                   : startTime ? startTime : null;
+
+    var seats = (b.max_capacity != null && b.current_capacity != null)
+                ? b.current_capacity + ' / ' + b.max_capacity + ' enrolled'
+                : null;
+
+    var imgSrc = b.image_url || 'images/courses/course-1.jpg';
+
+    // build time/date block
+    var metaHtml = '';
+    if (courseDate) {
+      metaHtml += '<div class="bk-meta-item">'
+               +    '<span class="bk-meta-icon"><i class="ti-calendar"></i></span>'
+               +    '<div><span class="bk-meta-label">Course Date</span>'
+               +    '<span class="bk-meta-val">' + courseDate + '</span></div>'
+               + '</div>';
+    }
+    if (timeRange) {
+      metaHtml += '<div class="bk-meta-item">'
+               +    '<span class="bk-meta-icon"><i class="ti-time"></i></span>'
+               +    '<div><span class="bk-meta-label">Class Time</span>'
+               +    '<span class="bk-meta-val">' + timeRange + '</span></div>'
+               + '</div>';
+    }
+    if (seats) {
+      metaHtml += '<div class="bk-meta-item">'
+               +    '<span class="bk-meta-icon"><i class="ti-user"></i></span>'
+               +    '<div><span class="bk-meta-label">Enrollment</span>'
+               +    '<span class="bk-meta-val">' + seats + '</span></div>'
+               + '</div>';
+    }
+
+    return '<div class="booking-card" id="bcard-' + b.id + '">'
+         +   '<div class="bk-img-wrap">'
+         +     '<img src="' + imgSrc + '" alt="' + b.title + '" class="bk-img">'
+         +     '<span class="bk-cat-pill">' + b.category + '</span>'
          +   '</div>'
-         +   '<div class="booking-info">'
-         +     '<h5 class="booking-title">' + b.title + '</h5>'
-         +     '<p class="booking-desc">' + (b.description || '').substring(0, 100) + (b.description && b.description.length > 100 ? '…' : '') + '</p>'
-         +     '<div class="booking-meta">'
-         +       '<span><i class="ti-calendar mr-1"></i>Course date: ' + courseDate + '</span>'
-         +       '<span><i class="ti-time mr-1"></i>Enrolled: ' + enrolledDate + '</span>'
+         +   '<div class="bk-body">'
+         +     '<div class="bk-top">'
+         +       '<h5 class="bk-title">' + b.title + '</h5>'
+         +       '<div class="' + priceClass + '">' + priceStr + '</div>'
          +     '</div>'
-         +   '</div>'
-         +   '<div class="booking-price-col">'
-         +     '<div class="booking-price">' + priceStr + '</div>'
-         +     '<button class="btn btn-sm btn-outline-danger remove-booking-btn mt-2" data-id="' + b.id + '">'
-         +       '<i class="ti-trash mr-1"></i>Remove'
-         +     '</button>'
+         +     (b.description ? '<p class="bk-desc">' + b.description.substring(0, 120) + (b.description.length > 120 ? '…' : '') + '</p>' : '')
+         +     '<div class="bk-meta-row">' + metaHtml + '</div>'
+         +     '<div class="bk-footer">'
+         +       '<span class="bk-enrolled-on"><i class="ti-bookmark mr-1"></i>Enrolled on ' + formatDate(b.enrolledAt) + '</span>'
+         +       '<button class="btn btn-sm remove-booking-btn" data-id="' + b.id + '">'
+         +         '<i class="ti-trash mr-1"></i>Remove'
+         +       '</button>'
+         +     '</div>'
          +   '</div>'
          + '</div>';
   }

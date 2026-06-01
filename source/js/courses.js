@@ -155,14 +155,18 @@
           return;
         }
         bookings.push({
-          id:           course.id,
-          title:        course.title,
-          category:     course.category || 'General',
-          price:        course.price || 0,
-          image_url:    course.image_url || 'images/courses/course-1.jpg',
-          course_date:  course.course_date || '',
-          description:  course.description || '',
-          enrolledAt:   new Date().toISOString()
+          id:               course.id,
+          title:            course.title,
+          category:         course.category || 'General',
+          price:            course.price || 0,
+          image_url:        course.image_url || 'images/courses/course-1.jpg',
+          course_date:      course.course_date || '',
+          start_time:       course.start_time || '',
+          end_time:         course.end_time || '',
+          max_capacity:     course.max_capacity || null,
+          current_capacity: course.current_capacity || null,
+          description:      course.description || '',
+          enrolledAt:       new Date().toISOString()
         });
         localStorage.setItem('bookingList', JSON.stringify(bookings));
 
