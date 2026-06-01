@@ -15,9 +15,11 @@ app.get('/api', (req, res) => {
 
 const courseRoute = require('./routes/courseRoute');
 const authRoute = require('./routes/authRoute');
+const checkoutRoute = require('./routes/checkoutRoute');
 
 app.use('/api/courses', courseRoute);
 app.use('/api/auth', authRoute);
+app.use('/api/checkout', checkoutRoute);
 
 const PORT = process.env.PORT || 8000;
 

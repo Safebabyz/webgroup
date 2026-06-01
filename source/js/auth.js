@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const signupMessage = document.getElementById('signupMessage');
   const logoutBtn = document.getElementById('logoutBtn');
   const logoutNavItem = document.getElementById('logoutNavItem');
+  const bookingNavItem = document.getElementById('bookingNavItem');
   const loginNavLinks = document.querySelectorAll('a[href="#loginModal"]');
   const signupNavLinks = document.querySelectorAll('a[href="#signupModal"]');
 
@@ -19,6 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (logoutNavItem) {
       logoutNavItem.classList.toggle('d-none', !loggedIn);
+    }
+
+    if (bookingNavItem) {
+      bookingNavItem.classList.toggle('d-none', !loggedIn);
     }
 
     loginNavLinks.forEach(function (link) {
@@ -36,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function handleLogout(event) {
     event.preventDefault();
     localStorage.removeItem('authToken');
+    localStorage.removeItem('userId');
     updateAuthUI();
     window.location.reload();
   }
@@ -90,12 +96,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         localStorage.setItem('authToken', result.token);
+        if (result.userId) {
+          localStorage.setItem('userId', result.userId);
+        }
         showMessage(loginMessage, 'Login successful! Token stored in localStorage.', false);
         updateAuthUI();
+        if (window.$) {
+          window.$('#loginModal').modal('hide');
+        }
 
-        setTimeout(() => {
+        setTimeout(function () {
           window.location.reload();
-        }, 800);
+        }, 500);
       } catch (error) {
         showMessage(loginMessage, 'Unable to login. Please check your connection.', true);
         console.error('Login error:', error);
@@ -104,8 +116,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (signupForm) {
+    var signupButton = signupForm.querySelector('button[type="submit"]');
+    var signupInProgress = false;
+
     signupForm.addEventListener('submit', async (event) => {
       event.preventDefault();
+
+      if (signupInProgress) {
+        return;
+      }
+
+      signupInProgress = true;
+      if (signupButton) {
+        signupButton.disabled = true;
+      }
 
       const name = document.getElementById('signupName').value.trim();
       const email = document.getElementById('signupEmail').value.trim();
@@ -115,11 +139,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!name || !email || !password) {
         showMessage(signupMessage, 'Please enter name, email, and password.', true);
+        signupInProgress = false;
+        if (signupButton) {
+          signupButton.disabled = false;
+        }
         return;
       }
 
       if (!passwordPattern.test(password)) {
         showMessage(signupMessage, 'Password must be at least 8 characters long and include one uppercase letter and one special character.', true);
+        signupInProgress = false;
+        if (signupButton) {
+          signupButton.disabled = false;
+        }
         return;
       }
 
@@ -136,14 +168,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!response.ok) {
           showMessage(signupMessage, result.message || result.error || 'Registration failed. Please try again.', true);
+          signupInProgress = false;
+          if (signupButton) {
+            signupButton.disabled = false;
+          }
           return;
         }
 
-        showMessage(signupMessage, 'Registration successful. You can now login.', false);
-        signupForm.reset();
+        if (result.token) {
+          localStorage.setItem('authToken', result.token);
+          showMessage(signupMessage, 'Registration successful. You are now logged in.', false);
+          updateAuthUI();
+          signupForm.reset();
+          if (window.$) {
+            window.$('#signupModal').modal('hide');
+          }
+          setTimeout(function () {
+            window.location.reload();
+          }, 300);
+        } else {
+          showMessage(signupMessage, 'Registration successful. You can now login.', false);
+          signupForm.reset();
+          if (window.$) {
+            window.$('#signupModal').modal('hide');
+          }
+          signupInProgress = false;
+          if (signupButton) {
+            signupButton.disabled = false;
+          }
+        }
       } catch (error) {
         showMessage(signupMessage, 'Unable to register. Please try again later.', true);
         console.error('Registration error:', error);
+        signupInProgress = false;
+        if (signupButton) {
+          signupButton.disabled = false;
+        }
       }
     });
   }

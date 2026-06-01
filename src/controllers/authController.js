@@ -28,7 +28,7 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
-        return res.status(200).json({ token });
+        return res.status(200).json({ token, userId: user.id });
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }
@@ -54,9 +54,16 @@ exports.register = async (req, res) => {
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
-        await authService.createUser(name, email, passwordHash);
+        const newUser = await authService.createUser(name, email, passwordHash);
 
-        return res.status(200).json({ message: 'Registration successful.' });
+        const token = jwt.sign({ id: newUser.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        console.log('DEBUG register response', { email, newUserId: newUser.id, token });
+        const responseData = {
+            message: 'Registration successful.',
+            token: token,
+            userId: newUser.id
+        };
+        return res.status(200).json(responseData);
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }

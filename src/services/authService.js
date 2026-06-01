@@ -4,6 +4,20 @@ const path = require('path');
 const dbPath = path.resolve(__dirname, '../../data/database.sqlite');
 const db = new sqlite3.Database(dbPath);
 
+// Remove duplicate email records before enforcing a unique email index.
+db.serialize(() => {
+    db.run(
+        `DELETE FROM users
+         WHERE id NOT IN (
+             SELECT MIN(id)
+             FROM users
+             GROUP BY LOWER(email)
+         )`
+    );
+
+    db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_unique ON users(email COLLATE NOCASE)`);
+});
+
 exports.findUserByEmail = (email) => {
     return new Promise((resolve, reject) => {
         const query = `SELECT * FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1`;
