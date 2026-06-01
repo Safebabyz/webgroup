@@ -64,6 +64,122 @@
 </section>
 <!-- /booking section -->
 
+<!-- ═══════════════════════════════════
+     Checkout Bar (sticky bottom)
+═══════════════════════════════════ -->
+<div id="checkout-bar" style="display:none;">
+  <div class="checkout-bar-inner container">
+    <div class="checkout-bar-left">
+      <span class="checkout-bar-label">Ready to enroll?</span>
+      <span class="checkout-bar-courses" id="checkout-course-count">0 course(s)</span>
+    </div>
+    <div class="checkout-bar-right">
+      <div class="checkout-bar-total-wrap">
+        <span class="checkout-bar-total-label">Total</span>
+        <span class="checkout-bar-total-val" id="checkout-bar-total">$0.00</span>
+      </div>
+      <button id="checkout-btn" class="btn-checkout">
+        <i class="ti-shopping-cart mr-2"></i>Proceed to Checkout
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     Checkout Modal
+═══════════════════════════════════ -->
+<div id="checkoutModal" class="checkout-modal-overlay" role="dialog" aria-modal="true" style="display:none;">
+  <div class="checkout-modal">
+
+    <!-- Header -->
+    <div class="checkout-modal-header">
+      <div class="checkout-modal-icon"><i class="ti-credit-card"></i></div>
+      <div>
+        <h4 class="checkout-modal-title">Complete Your Order</h4>
+        <p class="checkout-modal-sub" id="checkout-modal-summary">0 course(s) &bull; $0.00</p>
+      </div>
+      <button class="checkout-modal-close" id="checkout-modal-close" aria-label="Close">&times;</button>
+    </div>
+
+    <!-- Alert zone -->
+    <div id="checkout-alert" style="display:none;"></div>
+
+    <!-- Order Summary -->
+    <div class="checkout-order-summary" id="checkout-order-items"></div>
+
+    <!-- Form -->
+    <form id="checkoutForm" novalidate autocomplete="off">
+
+      <!-- Email -->
+      <div class="co-field-group">
+        <label class="co-label" for="co-email">
+          <i class="ti-email"></i> Email Address
+        </label>
+        <input type="email" id="co-email" class="co-input" placeholder="you@example.com" required>
+        <div class="co-field-hint">Order confirmation will be sent to this email.</div>
+        <div class="co-error" id="co-email-error"></div>
+      </div>
+
+      <!-- Divider -->
+      <div class="co-section-title"><span>Payment Details</span></div>
+
+      <!-- Card Number -->
+      <div class="co-field-group">
+        <label class="co-label" for="co-card-number">
+          <i class="ti-credit-card"></i> Card Number
+          <span class="co-card-icons">
+            <svg width="32" height="20" viewBox="0 0 38 24" fill="none"><rect width="38" height="24" rx="4" fill="#1A1F71"/><rect x="0" y="10" width="38" height="6" fill="#F7B600"/></svg>
+            <svg width="32" height="20" viewBox="0 0 38 24" fill="none"><rect width="38" height="24" rx="4" fill="#EB001B"/><circle cx="14" cy="12" r="8" fill="#EB001B"/><circle cx="24" cy="12" r="8" fill="#F79E1B"/><path d="M19 7.5a8 8 0 0 1 0 9 8 8 0 0 1 0-9z" fill="#FF5F00"/></svg>
+          </span>
+        </label>
+        <input type="text" id="co-card-number" class="co-input" placeholder="1234 5678 9012 3456" maxlength="19" inputmode="numeric" required>
+        <div class="co-error" id="co-card-error"></div>
+      </div>
+
+      <!-- Expiry + CVV row -->
+      <div class="co-row">
+        <div class="co-field-group" style="flex:1;">
+          <label class="co-label" for="co-expiry"><i class="ti-calendar"></i> Expiry Date</label>
+          <input type="text" id="co-expiry" class="co-input" placeholder="MM / YY" maxlength="7" inputmode="numeric" required>
+          <div class="co-error" id="co-expiry-error"></div>
+        </div>
+        <div class="co-field-group" style="flex:1;">
+          <label class="co-label" for="co-cvv"><i class="ti-lock"></i> CVV</label>
+          <input type="password" id="co-cvv" class="co-input" placeholder="&bull;&bull;&bull;" maxlength="4" inputmode="numeric" required>
+          <div class="co-error" id="co-cvv-error"></div>
+        </div>
+      </div>
+
+      <!-- Cardholder Name -->
+      <div class="co-field-group">
+        <label class="co-label" for="co-name"><i class="ti-user"></i> Cardholder Name</label>
+        <input type="text" id="co-name" class="co-input" placeholder="Name on card" required>
+        <div class="co-error" id="co-name-error"></div>
+      </div>
+
+      <!-- Submit -->
+      <div class="co-submit-wrap">
+        <div class="co-secure-note"><i class="ti-lock mr-1"></i>Your payment is secured with 256-bit SSL encryption.</div>
+        <button type="submit" class="btn-checkout-submit" id="checkout-submit-btn">
+          <i class="ti-check mr-2"></i>Confirm & Pay <span id="checkout-pay-amount">$0.00</span>
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<!-- Checkout Success Modal -->
+<div id="checkoutSuccessModal" class="checkout-modal-overlay" role="dialog" aria-modal="true" style="display:none;">
+  <div class="checkout-modal checkout-success-modal">
+    <div class="checkout-success-icon"><i class="ti-check"></i></div>
+    <h3 class="checkout-success-title">Payment Successful!</h3>
+    <p class="checkout-success-msg" id="checkout-success-msg">Thank you for your enrollment. A confirmation has been sent to your email.</p>
+    <button class="btn-checkout-done" id="checkout-success-close">Done</button>
+  </div>
+</div>
+
 <style>
 /* ═══════════════════════════════════
    Booking Section Header
@@ -344,6 +460,427 @@
   .bk-top { flex-direction: column; gap: 6px; }
   .booking-header { flex-direction: column; align-items: flex-start; gap: 12px; }
   .bk-meta-row { gap: 10px; }
+}
+
+/* ═══════════════════════════════════
+   Checkout Bar (Sticky)
+═══════════════════════════════════ */
+#checkout-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 1050;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+  border-top: 2px solid #f36523;
+  box-shadow: 0 -6px 32px rgba(0,0,0,.22);
+  animation: slideUpBar .4s cubic-bezier(.34,1.36,.64,1) both;
+}
+@keyframes slideUpBar {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.checkout-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  gap: 20px;
+}
+.checkout-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.checkout-bar-label {
+  font-size: .9rem;
+  font-weight: 600;
+  color: rgba(255,255,255,.7);
+  letter-spacing: .3px;
+}
+.checkout-bar-courses {
+  background: rgba(243,101,35,.2);
+  border: 1px solid rgba(243,101,35,.4);
+  color: #f89b6a;
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: .82rem;
+  font-weight: 700;
+}
+.checkout-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.checkout-bar-total-wrap { text-align: right; }
+.checkout-bar-total-label {
+  display: block;
+  font-size: .68rem;
+  color: rgba(255,255,255,.5);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  font-weight: 600;
+}
+.checkout-bar-total-val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #f36523;
+  line-height: 1.1;
+}
+.btn-checkout {
+  background: linear-gradient(135deg, #f36523 0%, #e8430d 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 28px;
+  font-size: .95rem;
+  font-weight: 700;
+  letter-spacing: .3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 18px rgba(243,101,35,.35);
+  transition: transform .2s, box-shadow .2s, background .2s;
+  white-space: nowrap;
+}
+.btn-checkout:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(243,101,35,.5);
+  background: linear-gradient(135deg, #ff7a38 0%, #f36523 100%);
+}
+.btn-checkout:active { transform: translateY(0); }
+
+/* ═══════════════════════════════════
+   Checkout Modal Overlay
+═══════════════════════════════════ */
+.checkout-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(10,10,30,.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeInOverlay .25s ease both;
+}
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.checkout-modal {
+  background: #fff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0,0,0,.3);
+  animation: slideUpModal .35s cubic-bezier(.34,1.36,.64,1) both;
+  padding: 32px;
+  scrollbar-width: thin;
+}
+@keyframes slideUpModal {
+  from { transform: translateY(40px) scale(.97); opacity: 0; }
+  to   { transform: translateY(0)     scale(1);   opacity: 1; }
+}
+
+/* Header */
+.checkout-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f3f4f6;
+}
+.checkout-modal-icon {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, #f36523, #e8430d);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  box-shadow: 0 6px 18px rgba(243,101,35,.3);
+}
+.checkout-modal-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0 0 4px;
+}
+.checkout-modal-sub {
+  font-size: .85rem;
+  color: #888;
+  margin: 0;
+}
+.checkout-modal-close {
+  margin-left: auto;
+  background: #f3f4f6;
+  border: none;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  color: #555;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s, color .2s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.checkout-modal-close:hover { background: #fee2e2; color: #e53e3e; }
+
+/* Alert */
+#checkout-alert {
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  font-size: .9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.checkout-alert-error {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+}
+.checkout-alert-warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+/* Order Summary */
+.checkout-order-summary {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 24px;
+}
+.checkout-order-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  font-size: .88rem;
+  gap: 12px;
+}
+.checkout-order-item:last-child { border-bottom: none; }
+.checkout-order-item-name {
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+}
+.checkout-order-item-status {
+  font-size: .75rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.checkout-status-ok { background: #d1fae5; color: #065f46; }
+.checkout-status-full { background: #fee2e2; color: #991b1b; }
+.checkout-order-item-price {
+  font-weight: 700;
+  color: #f36523;
+  flex-shrink: 0;
+}
+.checkout-order-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 2px solid #e5e7eb;
+  font-weight: 800;
+  font-size: 1rem;
+  color: #1a1a2e;
+}
+.checkout-order-total-val { color: #f36523; font-size: 1.15rem; }
+
+/* Section title divider */
+.co-section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 16px;
+}
+.co-section-title::before,
+.co-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+.co-section-title span {
+  font-size: .78rem;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  white-space: nowrap;
+}
+
+/* Form Fields */
+.co-row {
+  display: flex;
+  gap: 16px;
+}
+.co-field-group {
+  margin-bottom: 16px;
+  position: relative;
+}
+.co-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: .82rem;
+  font-weight: 700;
+  color: #555;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.co-card-icons {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.co-input {
+  width: 100%;
+  padding: 13px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: .95rem;
+  color: #333;
+  background: #fff;
+  transition: border-color .2s, box-shadow .2s;
+  outline: none;
+  font-family: inherit;
+}
+.co-input:focus {
+  border-color: #f36523;
+  box-shadow: 0 0 0 3px rgba(243,101,35,.12);
+}
+.co-input.co-input-error {
+  border-color: #e53e3e;
+  box-shadow: 0 0 0 3px rgba(229,62,62,.1);
+}
+.co-field-hint {
+  font-size: .76rem;
+  color: #aaa;
+  margin-top: 4px;
+}
+.co-error {
+  font-size: .78rem;
+  color: #e53e3e;
+  font-weight: 600;
+  margin-top: 4px;
+  min-height: 16px;
+}
+
+/* Submit */
+.co-submit-wrap {
+  margin-top: 8px;
+}
+.co-secure-note {
+  font-size: .78rem;
+  color: #aaa;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.btn-checkout-submit {
+  width: 100%;
+  background: linear-gradient(135deg, #f36523 0%, #e8430d 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 15px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: .3px;
+  box-shadow: 0 6px 24px rgba(243,101,35,.35);
+  transition: transform .2s, box-shadow .2s;
+}
+.btn-checkout-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 32px rgba(243,101,35,.5);
+}
+.btn-checkout-submit:disabled {
+  background: #ccc;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ═══════════════════════════════════
+   Checkout Success Modal
+═══════════════════════════════════ */
+.checkout-success-modal {
+  text-align: center;
+  max-width: 400px;
+  padding: 48px 40px;
+}
+.checkout-success-icon {
+  width: 80px; height: 80px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 2rem;
+  color: #fff;
+  box-shadow: 0 8px 30px rgba(16,185,129,.3);
+  animation: popIn .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.checkout-success-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin-bottom: 10px;
+}
+.checkout-success-msg {
+  font-size: .95rem;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+.btn-checkout-done {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 13px 40px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(16,185,129,.3);
+  transition: transform .2s, box-shadow .2s;
+}
+.btn-checkout-done:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(16,185,129,.45);
+}
+
+/* Responsive modal / bar */
+@media (max-width: 575px) {
+  .checkout-bar-inner { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .checkout-bar-right { width: 100%; justify-content: space-between; }
+  .checkout-modal { padding: 22px 16px; }
+  .co-row { flex-direction: column; gap: 0; }
 }
 </style>
 
