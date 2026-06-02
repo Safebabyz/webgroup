@@ -23,7 +23,13 @@
   document.addEventListener('DOMContentLoaded', function() {
     var badge = document.getElementById('booking-nav-badge');
     if (!badge) return;
-    var count = JSON.parse(localStorage.getItem('bookingList') || '[]').length;
+    var userId = localStorage.getItem('userId');
+    if (!userId) {
+      badge.style.display = 'none';
+      return;
+    }
+    var storageKey = 'bookingList_' + userId;
+    var count = JSON.parse(localStorage.getItem(storageKey) || '[]').length;
     badge.textContent = count;
     badge.style.display = count > 0 ? 'inline-flex' : 'none';
   });

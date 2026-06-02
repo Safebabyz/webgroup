@@ -4,6 +4,53 @@
 (function () {
   var STORAGE_KEY = 'bookingList';
 
+  function getBookingStorageKey() {
+    var userId = localStorage.getItem('userId');
+    return userId ? STORAGE_KEY + '_' + userId : STORAGE_KEY;
+  }
+
+  function getBookings() {
+    return JSON.parse(localStorage.getItem(getBookingStorageKey()) || '[]');
+  }
+
+  function saveBookings(arr) {
+    localStorage.setItem(getBookingStorageKey(), JSON.stringify(arr));
+  }
+
+  function fetchLatestCourses() {
+    return fetch('http://localhost:8000/api/courses')
+      .then(function (response) {
+        if (!response.ok) throw new Error('Unable to load course data');
+        return response.json();
+      });
+  }
+
+  function refreshBookingsFromServer(bookings) {
+    if (!bookings || bookings.length === 0) return Promise.resolve(bookings);
+    return fetchLatestCourses().then(function (courses) {
+      var courseMap = {};
+      courses.forEach(function (course) {
+        courseMap[course.id] = course;
+      });
+      var updated = bookings.map(function (b) {
+        var course = courseMap[b.id];
+        if (!course) return b;
+        return Object.assign({}, b, {
+          current_capacity: course.current_capacity,
+          max_capacity: course.max_capacity,
+          title: course.title || b.title,
+          course_date: course.course_date || b.course_date,
+          start_time: course.start_time || b.start_time,
+          end_time: course.end_time || b.end_time
+        });
+      });
+      saveBookings(updated);
+      return updated;
+    }).catch(function () {
+      return bookings;
+    });
+  }
+
   var listEl    = document.getElementById('booking-list');
   var emptyEl   = document.getElementById('booking-empty');
   var countEl   = document.getElementById('booking-count');
@@ -17,16 +64,6 @@
   // ── เช็ค Login ──
   function isLoggedIn() {
     return Boolean(localStorage.getItem('authToken'));
-  }
-
-  // ── โหลด bookings ──
-  function getBookings() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  }
-
-  // ── บันทึก bookings ──
-  function saveBookings(arr) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
   }
 
   // ── ลบ booking ──
@@ -207,20 +244,7 @@
     }
   }
 
-  // ── Render ──
-  function render() {
-    if (!isLoggedIn()) {
-      if (loginWall) loginWall.style.display = 'block';
-      listEl.style.display = 'none';
-      if (emptyEl) emptyEl.style.display = 'none';
-      notifyCheckoutBar([]);
-      return;
-    }
-
-    if (loginWall) loginWall.style.display = 'none';
-    listEl.style.display = 'block';
-
-    var bookings = getBookings();
+  function renderBookingList(bookings) {
     updateBadge(bookings.length);
     notifyCheckoutBar(bookings);
 
@@ -253,6 +277,37 @@
           removeBooking(id);
         }
       });
+    });
+  }
+
+  // ── Render ──
+  function render() {
+    if (!isLoggedIn()) {
+      if (loginWall) loginWall.style.display = 'block';
+      listEl.style.display = 'none';
+      if (emptyEl) emptyEl.style.display = 'none';
+      notifyCheckoutBar([]);
+      return;
+    }
+
+    if (loginWall) loginWall.style.display = 'none';
+    listEl.style.display = 'block';
+
+    var bookings = getBookings();
+    if (bookings.length === 0) {
+      updateBadge(0);
+      notifyCheckoutBar([]);
+      if (countEl) countEl.textContent = '0';
+      if (totalEl) totalEl.textContent = '$0.00';
+      listEl.innerHTML = '';
+      if (emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
+
+    refreshBookingsFromServer(bookings).then(function (updatedBookings) {
+      renderBookingList(updatedBookings);
+    }).catch(function () {
+      renderBookingList(bookings);
     });
   }
 

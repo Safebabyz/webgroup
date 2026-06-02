@@ -48,6 +48,19 @@
     return text.replace(new RegExp('(' + esc + ')', 'gi'), '<mark class="sh">$1</mark>');
   }
 
+  function getBookingStorageKey() {
+    var userId = localStorage.getItem('userId');
+    return userId ? 'bookingList_' + userId : 'bookingList';
+  }
+
+  function getBookings() {
+    return JSON.parse(localStorage.getItem(getBookingStorageKey()) || '[]');
+  }
+
+  function saveBookings(bookings) {
+    localStorage.setItem(getBookingStorageKey(), JSON.stringify(bookings));
+  }
+
   function showSkeleton() {
     var html = '';
     for (var i = 0; i < ITEMS_PER_PAGE; i++) {
@@ -159,7 +172,7 @@
         }
 
         // ── login แล้ว → บันทึกลง bookingList ──
-        var bookings = JSON.parse(localStorage.getItem('bookingList') || '[]');
+        var bookings = getBookings();
         var alreadyBooked = bookings.some(function (b) { return b.id == course.id; });
         if (alreadyBooked) {
           showBookingToast('You have already enrolled in "' + course.title + '".', 'info');
@@ -191,7 +204,7 @@
           description:      course.description || '',
           enrolledAt:       new Date().toISOString()
         });
-        localStorage.setItem('bookingList', JSON.stringify(bookings));
+        saveBookings(bookings);
 
         // อัปเดตปุ่มและ badge
         this.innerHTML = '<i class="ti-check mr-1"></i>Enrolled';
@@ -203,7 +216,7 @@
     });
 
     // ── อัปเดตสถานะปุ่มที่ enroll แล้ว ──
-    var bookings = JSON.parse(localStorage.getItem('bookingList') || '[]');
+    var bookings = getBookings();
     var bookedIds = bookings.map(function (b) { return String(b.id); });
     resultsEl.querySelectorAll('.enroll-btn').forEach(function (btn) {
       if (bookedIds.indexOf(btn.getAttribute('data-course-id')) !== -1) {
@@ -581,7 +594,7 @@
   function updateBookingBadge() {
     var badge = document.getElementById('booking-nav-badge');
     if (!badge) return;
-    var count = JSON.parse(localStorage.getItem('bookingList') || '[]').length;
+    var count = getBookings().length;
     badge.textContent = count;
     badge.style.display = count > 0 ? 'inline-flex' : 'none';
   }

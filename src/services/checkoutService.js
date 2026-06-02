@@ -4,6 +4,22 @@ const path = require('path');
 const dbPath = path.resolve(__dirname, '../../data/database.sqlite');
 const db = new sqlite3.Database(dbPath);
 
+function runQuery(query, params) {
+    return new Promise((resolve, reject) => {
+        db.run(query, params, function (err) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(this);
+            }
+        });
+    });
+}
+
+exports.beginTransaction = () => runQuery('BEGIN TRANSACTION;', []);
+exports.commitTransaction = () => runQuery('COMMIT;', []);
+exports.rollbackTransaction = () => runQuery('ROLLBACK;', []);
+
 // Get all bookings for a user
 exports.getUserBookings = (userId) => {
     return new Promise((resolve, reject) => {
@@ -89,16 +105,22 @@ exports.getCourseById = (courseId) => {
 };
 
 // Update course capacity after purchase
-exports.updateCourseCapacity = (courseId, increment = 1) => {
+exports.updateCourseCapacity = (courseId, increment = 1, title) => {
     return new Promise((resolve, reject) => {
         const query = `
             UPDATE courses 
             SET current_capacity = current_capacity + ? 
-            WHERE id = ?
+            WHERE id = ? AND current_capacity < max_capacity
         `;
         db.run(query, [increment, courseId], function (err) {
             if (err) {
                 reject(err);
+            } else if (this.changes === 0) {
+                const error = new Error('Course is full.');
+                error.code = 'COURSE_FULL';
+                error.courseId = courseId;
+                if (title) error.courseTitle = title;
+                reject(error);
             } else {
                 resolve({ changes: this.changes });
             }
@@ -109,7 +131,7 @@ exports.updateCourseCapacity = (courseId, increment = 1) => {
 // Get a course with all details for snapshot
 exports.getCourseForSnapshot = (courseId) => {
     return new Promise((resolve, reject) => {
-        const query = `SELECT id, title, price, max_capacity, course_date, start_time, end_time FROM courses WHERE id = ? LIMIT 1`;
+        const query = `SELECT id, title, price, max_capacity, current_capacity, course_date, start_time, end_time FROM courses WHERE id = ? LIMIT 1`;
         db.get(query, [courseId], (err, row) => {
             if (err) {
                 reject(err);

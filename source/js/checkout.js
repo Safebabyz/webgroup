@@ -14,8 +14,17 @@
     return Boolean(localStorage.getItem('authToken'));
   }
 
+  function getBookingStorageKey() {
+    var userId = localStorage.getItem('userId');
+    return userId ? 'bookingList_' + userId : 'bookingList';
+  }
+
   function getBookings() {
-    return JSON.parse(localStorage.getItem('bookingList') || '[]');
+    return JSON.parse(localStorage.getItem(getBookingStorageKey()) || '[]');
+  }
+
+  function saveBookings(arr) {
+    localStorage.setItem(getBookingStorageKey(), JSON.stringify(arr));
   }
 
   function updateCheckoutBar(bookings) {
@@ -81,12 +90,39 @@
 
     // 3) ตรวจ full courses
     var fullCourses = bookings.filter(isFull);
+    var availableCourses = bookings.filter(function (b) { return !isFull(b); });
     hideCheckoutAlert();
+
+    if (availableCourses.length === 0) {
+      if (checkoutForm) {
+        checkoutForm.reset();
+        checkoutForm.style.display = 'none';
+      }
+      if (checkoutSubmitBtn) {
+        checkoutSubmitBtn.disabled = true;
+      }
+      showCheckoutAlert(
+        'All selected courses are currently full. Please remove them from your list before checkout.',
+        'warning'
+      );
+      if (checkoutModal) {
+        checkoutModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+      return;
+    }
+
+    if (checkoutForm) {
+      checkoutForm.style.display = '';
+      checkoutForm.reset();
+    }
+    if (checkoutSubmitBtn) {
+      checkoutSubmitBtn.disabled = false;
+    }
 
     // 4) Populate summary
     var total   = bookings.reduce(function (s, b) { return s + (Number(b.price) || 0); }, 0);
-    var payable = bookings.filter(function (b) { return !isFull(b); })
-                          .reduce(function (s, b) { return s + (Number(b.price) || 0); }, 0);
+    var payable = availableCourses.reduce(function (s, b) { return s + (Number(b.price) || 0); }, 0);
 
     if (checkoutModalSummary) {
       checkoutModalSummary.innerHTML = bookings.length + ' course' + (bookings.length > 1 ? 's' : '') + ' &bull; $' + total.toFixed(2);
@@ -305,9 +341,14 @@
       .then(function (response) {
         if (!response.ok) {
           return response.json().then(function (err) {
-            throw new Error(err && err.message ? err.message : 'Checkout failed');
+            var error = new Error(err && err.message ? err.message : 'Checkout failed');
+            error.status = response.status;
+            error.conflicts = err && err.conflicts ? err.conflicts : [];
+            throw error;
           }).catch(function () {
-            throw new Error('Checkout failed (status ' + response.status + ')');
+            var error = new Error('Checkout failed (status ' + response.status + ')');
+            error.status = response.status;
+            throw error;
           });
         }
         return response.json();
@@ -324,7 +365,7 @@
 
         // Clear only available (non-full) bookings from localStorage
         var remaining = bookings.filter(function (b) { return isFull(b); });
-        localStorage.setItem('bookingList', JSON.stringify(remaining));
+        saveBookings(remaining);
 
         // Re-enable button
         if (checkoutSubmitBtn) {
@@ -334,7 +375,18 @@
       })
       .catch(function (err) {
         console.error('Checkout error:', err);
-        alert(err && err.message ? err.message : 'Checkout failed. Please try again.');
+
+        if (err.status === 409 && err.conflicts && err.conflicts.length) {
+          var names = err.conflicts.map(function (item) { return '"' + item.title + '"'; }).join(', ');
+          showCheckoutAlert(
+            (err.conflicts.length > 1 ? 'These courses are' : 'This course is') +
+            ' right now full: ' + names + '. Please remove ' +
+            (err.conflicts.length > 1 ? 'them from' : 'it from') + ' your list and try again.',
+            'warning'
+          );
+        } else {
+          alert(err && err.message ? err.message : 'Checkout failed. Please try again.');
+        }
 
         // Re-enable button
         if (checkoutSubmitBtn) {
