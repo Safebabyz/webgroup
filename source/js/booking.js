@@ -9,10 +9,20 @@
     return userId ? STORAGE_KEY + '_' + userId : STORAGE_KEY;
   }
 
+/**
+   * Function: getBookings
+   * Purpose: Retrieves the user's current booking list (cart) from local storage.
+   * Data Flow: Reads from localStorage using dynamic key -> Parses JSON -> Returns array of bookings.
+   */
   function getBookings() {
     return JSON.parse(localStorage.getItem(getBookingStorageKey()) || '[]');
   }
 
+/**
+   * Function: saveBookings
+   * Purpose: Saves the updated booking list (cart) back to local storage.
+   * Data Flow: Accepts array of bookings -> Stringifies to JSON -> Writes to localStorage using dynamic key.
+   */
   function saveBookings(arr) {
     localStorage.setItem(getBookingStorageKey(), JSON.stringify(arr));
   }
@@ -25,6 +35,11 @@
       });
   }
 
+/**
+   * Function: refreshBookingsFromServer
+   * Purpose: Fetches the latest course data from the server and updates the local bookings with current capacities and details.
+   * Data Flow: fetchLatestCourses() -> Maps new data to existing bookings -> saveBookings() -> Returns updated bookings array.
+   */
   function refreshBookingsFromServer(bookings) {
     if (!bookings || bookings.length === 0) return Promise.resolve(bookings);
     return fetchLatestCourses().then(function (courses) {
@@ -117,6 +132,11 @@
     return titles.slice(0, -1).join(', ') + ', and ' + titles[titles.length - 1];
   }
 
+/**
+   * Function: computeBookingStatuses
+   * Purpose: Analyzes the booking list to identify courses that are full or have schedule conflicts.
+   * Data Flow: Iterates through bookings -> Checks capacities and overlapping times -> Returns a map of status and conflicts for each booking ID.
+   */
   function computeBookingStatuses(bookings) {
     var statusMap = {};
 
@@ -244,6 +264,11 @@
     }
   }
 
+/**
+   * Function: renderBookingList
+   * Purpose: Renders the booking cards onto the page and binds removal events.
+   * Data Flow: Accepts bookings array -> Updates UI badges and totals -> Generates HTML via renderCard() -> Inserts into DOM -> Binds click listeners.
+   */
   function renderBookingList(bookings) {
     updateBadge(bookings.length);
     notifyCheckoutBar(bookings);

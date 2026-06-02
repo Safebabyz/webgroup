@@ -16,11 +16,20 @@ function runQuery(query, params) {
     });
 }
 
+/**
+ * Function: beginTransaction / commitTransaction / rollbackTransaction
+ * Purpose: Manages database transactions.
+ * Data Flow: Executes BEGIN/COMMIT/ROLLBACK on the database -> Returns a Promise.
+ */
 exports.beginTransaction = () => runQuery('BEGIN TRANSACTION;', []);
 exports.commitTransaction = () => runQuery('COMMIT;', []);
 exports.rollbackTransaction = () => runQuery('ROLLBACK;', []);
 
-// Get all bookings for a user
+/**
+ * Function: getUserBookings
+ * Purpose: Retrieves all bookings made by a specific user.
+ * Data Flow: Executes a SELECT query on 'bookings' table -> Returns a Promise resolving to an array of booking objects.
+ */
 exports.getUserBookings = (userId) => {
     return new Promise((resolve, reject) => {
         const query = `
@@ -38,7 +47,11 @@ exports.getUserBookings = (userId) => {
     });
 };
 
-// Create a new booking (order)
+/**
+ * Function: createBooking
+ * Purpose: Creates a new booking record for a user.
+ * Data Flow: Executes an INSERT query on 'bookings' table -> Returns a Promise resolving to an object containing the new booking's ID, userId, and totalAmount.
+ */
 exports.createBooking = (userId, totalAmount) => {
     return new Promise((resolve, reject) => {
         const query = `
@@ -55,7 +68,11 @@ exports.createBooking = (userId, totalAmount) => {
     });
 };
 
-// Add booking items (courses purchased)
+/**
+ * Function: addBookingItems
+ * Purpose: Adds multiple course items to an existing booking.
+ * Data Flow: Executes multiple INSERT queries on 'booking_items' table -> Returns a Promise resolving when all inserts are complete.
+ */
 exports.addBookingItems = (bookingId, courses) => {
     return new Promise((resolve, reject) => {
         if (!courses || courses.length === 0) {
@@ -90,7 +107,11 @@ exports.addBookingItems = (bookingId, courses) => {
     });
 };
 
-// Check if course exists and get details
+/**
+ * Function: getCourseById
+ * Purpose: Fetches basic details of a course by its ID.
+ * Data Flow: Executes a SELECT query on 'courses' table -> Returns a Promise resolving to the course object.
+ */
 exports.getCourseById = (courseId) => {
     return new Promise((resolve, reject) => {
         const query = `SELECT id, title, price FROM courses WHERE id = ? LIMIT 1`;
@@ -104,7 +125,11 @@ exports.getCourseById = (courseId) => {
     });
 };
 
-// Update course capacity after purchase
+/**
+ * Function: updateCourseCapacity
+ * Purpose: Increments the current capacity of a course, failing if it exceeds max capacity.
+ * Data Flow: Executes an UPDATE query on 'courses' table -> Returns a Promise resolving to the number of changes, or rejecting with a 'COURSE_FULL' error.
+ */
 exports.updateCourseCapacity = (courseId, increment = 1, title) => {
     return new Promise((resolve, reject) => {
         const query = `
@@ -128,7 +153,11 @@ exports.updateCourseCapacity = (courseId, increment = 1, title) => {
     });
 };
 
-// Get a course with all details for snapshot
+/**
+ * Function: getCourseForSnapshot
+ * Purpose: Retrieves comprehensive details of a course needed to create a historical snapshot at the time of booking.
+ * Data Flow: Executes a SELECT query on 'courses' table -> Returns a Promise resolving to the detailed course object.
+ */
 exports.getCourseForSnapshot = (courseId) => {
     return new Promise((resolve, reject) => {
         const query = `SELECT id, title, price, max_capacity, current_capacity, course_date, start_time, end_time FROM courses WHERE id = ? LIMIT 1`;

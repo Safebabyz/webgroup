@@ -82,6 +82,11 @@
     paginationRow.style.display = 'none';
   }
 
+/**
+   * Function: renderCard
+   * Purpose: Generates the HTML markup for a single course card.
+   * Data Flow: Accepts course object -> Extracts details (title, price, capacity, etc.) -> Returns HTML string for the card.
+   */
   function renderCard(course) {
     var q        = state.query;
     var title    = course.title || '';
@@ -125,6 +130,11 @@
          + '</div>';
   }
 
+/**
+   * Function: renderPage
+   * Purpose: Renders a specific page of filtered courses to the DOM and attaches enrollment event listeners.
+   * Data Flow: Reads state.filtered and state.page -> Slices array -> Maps to renderCard() -> Inserts into DOM -> Binds 'click' to enroll buttons.
+   */
   function renderPage() {
     var start = (state.page - 1) * ITEMS_PER_PAGE;
     var end   = start + ITEMS_PER_PAGE;
@@ -283,6 +293,11 @@
     return sorted;
   }
 
+/**
+   * Function: applyFilters
+   * Purpose: Filters and sorts the master course list based on current UI state (search, category, price, etc.).
+   * Data Flow: Reads state properties -> Filters state.all array -> Sorts results -> Updates state.filtered -> Calls renderPage().
+   */
   function applyFilters() {
     var q = state.query.toLowerCase().trim();
 
@@ -479,6 +494,11 @@
     showSkeleton();
   }
 
+/**
+   * Function: fetchCourses
+   * Purpose: Fetches the master list of courses from the backend API.
+   * Data Flow: Displays loading skeleton -> fetch() API -> JSON response -> Calls setCourses() to update state -> Handles errors.
+   */
   function fetchCourses() {
     if (!resultsEl) return;
     showLoading();

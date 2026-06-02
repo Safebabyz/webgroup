@@ -27,6 +27,11 @@
     localStorage.setItem(getBookingStorageKey(), JSON.stringify(arr));
   }
 
+/**
+   * Function: updateCheckoutBar
+   * Purpose: Updates the sticky checkout bar's item count and total price based on the current bookings.
+   * Data Flow: Accepts bookings array -> Calculates total price -> Updates DOM elements (count, total) -> Toggles bar visibility.
+   */
   function updateCheckoutBar(bookings) {
     if (!checkoutBar) return;
     if (!isLoggedIn() || bookings.length === 0) {
@@ -71,6 +76,11 @@
     if (checkoutAlert) checkoutAlert.style.display = 'none';
   }
 
+/**
+   * Function: openCheckoutModal
+   * Purpose: Prepares and displays the checkout modal, handling full courses and rendering the order summary.
+   * Data Flow: getBookings() -> Filters out full courses -> Updates modal DOM with summary and payable total -> Shows modal.
+   */
   function openCheckoutModal() {
     var bookings = getBookings();
 
@@ -197,6 +207,11 @@
     .forEach(function (pair) { clearError(pair[0], pair[1]); });
   }
 
+/**
+   * Function: validateCheckoutForm
+   * Purpose: Validates the user's input in the checkout form (email, card number, expiry, CVV, name).
+   * Data Flow: Reads input values from DOM -> Applies regex and logic checks -> Sets or clears error messages -> Returns boolean validation status.
+   */
   function validateCheckoutForm() {
     var valid = true;
     clearFieldErrors();

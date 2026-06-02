@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   var passwordPattern = /^(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
 
+/**
+   * Function: updateAuthUI
+   * Purpose: Updates the navigation and UI elements based on the user's authentication status.
+   * Data Flow: Reads 'authToken' from localStorage -> Toggles visibility of login, signup, logout, and booking nav items.
+   */
   function updateAuthUI() {
     const token = localStorage.getItem('authToken');
     const loggedIn = Boolean(token);
@@ -38,6 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+/**
+   * Function: handleLogout
+   * Purpose: Logs the user out by removing their authentication data and reloading the page.
+   * Data Flow: Event Trigger -> Removes 'authToken' and 'userId' from localStorage -> Calls updateAuthUI() -> Reloads page.
+   */
   function handleLogout(event) {
     event.preventDefault();
     localStorage.removeItem('authToken');
@@ -46,6 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.reload();
   }
 
+/**
+   * Function: showMessage
+   * Purpose: Displays a success or error message within a specified DOM element.
+   * Data Flow: Accepts DOM element, text string, and boolean flag -> Updates element's textContent and classes.
+   */
   function showMessage(el, text, isError) {
     if (!el) {
       return;

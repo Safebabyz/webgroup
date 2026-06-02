@@ -1,6 +1,35 @@
 const checkoutService = require('../services/checkoutService');
 
-// Process checkout and create booking
+function parseMinutes(time) {
+    if (!time) return null;
+    const parts = String(time).split(':').slice(0, 2);
+    const hour = Number(parts[0]);
+    const minute = Number(parts[1] || 0);
+    if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+    return hour * 60 + minute;
+}
+
+function timesOverlap(startA, endA, startB, endB) {
+    const a = parseMinutes(startA);
+    const b = parseMinutes(endA);
+    const c = parseMinutes(startB);
+    const d = parseMinutes(endB);
+    if (a === null || b === null || c === null || d === null) return false;
+    return a < d && c < b;
+}
+
+function formatConflictTitles(titles) {
+    if (!titles || !titles.length) return '';
+    if (titles.length === 1) return titles[0];
+    if (titles.length === 2) return titles[0] + ' and ' + titles[1];
+    return titles.slice(0, -1).join(', ') + ', and ' + titles[titles.length - 1];
+}
+
+/**
+ * Function: processCheckout
+ * Purpose: Handles the checkout process, verifying course availability, checking schedule conflicts, creating the booking, and updating capacities within a transaction.
+ * Data Flow: Request Body (userId, courses, totalAmount) -> checkoutService (Transaction, Check Capacity, Create Booking, Add Items, Update Capacity) -> Response (201 with booking details, or 400/404/409/500 error)
+ */
 exports.processCheckout = async (req, res) => {
     let transactionStarted = false;
 
@@ -39,6 +68,31 @@ exports.processCheckout = async (req, res) => {
             });
         }
 
+        // Check for schedule conflicts among the courses being checked out
+        const scheduleConflicts = [];
+        for (let i = 0; i < courseSnapshots.length; i++) {
+            for (let j = i + 1; j < courseSnapshots.length; j++) {
+                const a = courseSnapshots[i];
+                const b = courseSnapshots[j];
+                
+                if (a.course_date && b.course_date && a.course_date === b.course_date) {
+                    if (timesOverlap(a.start_time, a.end_time, b.start_time, b.end_time)) {
+                        scheduleConflicts.push(a.title);
+                        scheduleConflicts.push(b.title);
+                    }
+                }
+            }
+        }
+
+        if (scheduleConflicts.length > 0) {
+            await checkoutService.rollbackTransaction();
+            const uniqueConflicts = [...new Set(scheduleConflicts)];
+            return res.status(409).json({
+                message: `Schedule conflict detected among selected courses: ${formatConflictTitles(uniqueConflicts)}.`,
+                conflicts: uniqueConflicts
+            });
+        }
+
         const booking = await checkoutService.createBooking(userId, totalAmount);
         await checkoutService.addBookingItems(booking.id, courseSnapshots);
 
@@ -73,7 +127,11 @@ exports.processCheckout = async (req, res) => {
     }
 };
 
-// Get user's bookings
+/**
+ * Function: getUserBookings
+ * Purpose: Retrieves all bookings for a given user.
+ * Data Flow: Request Params (userId) -> checkoutService.getUserBookings -> Response (200 with bookings array, or 400/500 error)
+ */
 exports.getUserBookings = async (req, res) => {
     try {
         const { userId } = req.params;

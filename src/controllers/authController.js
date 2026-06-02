@@ -7,6 +7,11 @@ const JWT_EXPIRES_IN = '1h';
 
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
 
+/**
+ * Function: login
+ * Purpose: Handles user login by verifying credentials and generating a JWT.
+ * Data Flow: Request Body (email, password) -> authService.findUserByEmail -> bcrypt.compare -> Response (200 with token, or 401/500 error)
+ */
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -34,6 +39,11 @@ exports.login = async (req, res) => {
     }
 };
 
+/**
+ * Function: register
+ * Purpose: Handles new user registration, hashes the password, and returns a JWT.
+ * Data Flow: Request Body (name, email, password) -> validation -> authService.findUserByEmail -> bcrypt.hash -> authService.createUser -> Response (200 with token, or 400/409/500 error)
+ */
 exports.register = async (req, res) => {
     try {
         const { name, email, password } = req.body;

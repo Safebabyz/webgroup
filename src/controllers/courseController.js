@@ -1,5 +1,10 @@
 const courseService = require('../services/courseService');
 
+/**
+ * Function: getCourses
+ * Purpose: Handles the request to fetch all courses.
+ * Data Flow: Calls courseService.getAllCourses() to fetch data from DB. Returns a 200 JSON response with the courses array, or 404 if none found.
+ */
 exports.getCourses = async (req, res) => {
     try {
         const courses = await courseService.getAllCourses();

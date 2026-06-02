@@ -1,3 +1,8 @@
+/**
+ * Script: script.js
+ * Purpose: Initializes general UI components and third-party plugins (slick slider, venobox, filterizr, counters) and handles window scroll/load events.
+ * Data Flow: Uses jQuery to bind events to DOM elements on document ready and window load.
+ */
 (function ($) {
 	'use strict';
 
