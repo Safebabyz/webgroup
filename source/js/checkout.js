@@ -291,12 +291,11 @@
 
       var email = (document.getElementById('co-email') || {}).value || '';
 
-      // Call backend API to create booking
-      fetch('/api/checkout/process', {
+      // Call backend API to create booking (use backend server port)
+      var apiUrl = 'http://localhost:8000/api/checkout/process';
+      fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: Object.assign({ 'Content-Type': 'application/json' }, (localStorage.getItem('authToken') ? { 'Authorization': 'Bearer ' + localStorage.getItem('authToken') } : {})),
         body: JSON.stringify({
           userId: parseInt(userId, 10),
           courses: availableCourses,
@@ -304,7 +303,13 @@
         })
       })
       .then(function (response) {
-        if (!response.ok) throw new Error('Checkout failed');
+        if (!response.ok) {
+          return response.json().then(function (err) {
+            throw new Error(err && err.message ? err.message : 'Checkout failed');
+          }).catch(function () {
+            throw new Error('Checkout failed (status ' + response.status + ')');
+          });
+        }
         return response.json();
       })
       .then(function (data) {
@@ -329,8 +334,8 @@
       })
       .catch(function (err) {
         console.error('Checkout error:', err);
-        alert('Checkout failed. Please try again.');
-        
+        alert(err && err.message ? err.message : 'Checkout failed. Please try again.');
+
         // Re-enable button
         if (checkoutSubmitBtn) {
           checkoutSubmitBtn.disabled = false;
