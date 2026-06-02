@@ -1,6 +1,15 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const authService = require('../services/authService');
+let authService;
+try {
+    authService = require('../services/authService');
+} catch (err) {
+    if (err.code === 'MODULE_NOT_FOUND') {
+        console.warn('[Warning] authService not found. Auth features will be unavailable.');
+    } else {
+        throw err;
+    }
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 const JWT_EXPIRES_IN = '1h';
@@ -14,6 +23,9 @@ const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
  */
 exports.login = async (req, res) => {
     try {
+        if (!authService) {
+            return res.status(503).json({ message: 'Authentication service is currently unavailable.' });
+        }
         const { email, password } = req.body;
 
         if (!email || !password) {
@@ -46,6 +58,9 @@ exports.login = async (req, res) => {
  */
 exports.register = async (req, res) => {
     try {
+        if (!authService) {
+            return res.status(503).json({ message: 'Authentication service is currently unavailable.' });
+        }
         const { name, email, password } = req.body;
 
         if (!name || !email || !password) {

@@ -1,4 +1,13 @@
-const courseService = require('../services/courseService');
+let courseService;
+try {
+    courseService = require('../services/courseService');
+} catch (err) {
+    if (err.code === 'MODULE_NOT_FOUND') {
+        console.warn('[Warning] courseService not found. Course features will be unavailable.');
+    } else {
+        throw err;
+    }
+}
 
 /**
  * Function: getCourses
@@ -7,6 +16,9 @@ const courseService = require('../services/courseService');
  */
 exports.getCourses = async (req, res) => {
     try {
+        if (!courseService) {
+            return res.status(503).json({ message: 'Course service is currently unavailable.' });
+        }
         const courses = await courseService.getAllCourses();
         
         if (!courses || courses.length === 0) {

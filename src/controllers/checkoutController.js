@@ -1,4 +1,13 @@
-const checkoutService = require('../services/checkoutService');
+let checkoutService;
+try {
+    checkoutService = require('../services/checkoutService');
+} catch (err) {
+    if (err.code === 'MODULE_NOT_FOUND') {
+        console.warn('[Warning] checkoutService not found. Checkout features will be unavailable.');
+    } else {
+        throw err;
+    }
+}
 
 function parseMinutes(time) {
     if (!time) return null;
@@ -31,6 +40,9 @@ function formatConflictTitles(titles) {
  * Data Flow: Request Body (userId, courses, totalAmount) -> checkoutService (Transaction, Check Capacity, Create Booking, Add Items, Update Capacity) -> Response (201 with booking details, or 400/404/409/500 error)
  */
 exports.processCheckout = async (req, res) => {
+    if (!checkoutService) {
+        return res.status(503).json({ message: 'Checkout service is currently unavailable.' });
+    }
     let transactionStarted = false;
 
     try {
@@ -140,6 +152,9 @@ exports.getUserBookings = async (req, res) => {
             return res.status(400).json({ message: 'User ID is required.' });
         }
 
+        if (!checkoutService) {
+            return res.status(503).json({ message: 'Checkout service is currently unavailable.' });
+        }
         const bookings = await checkoutService.getUserBookings(userId);
         res.status(200).json(bookings);
     } catch (err) {
