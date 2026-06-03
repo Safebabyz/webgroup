@@ -12,7 +12,7 @@ try {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
-const JWT_EXPIRES_IN = '1h';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
 
@@ -21,7 +21,7 @@ const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
  * Purpose: Handles user login by verifying credentials and generating a JWT.
  * Data Flow: Request Body (email, password) -> authService.findUserByEmail -> bcrypt.compare -> Response (200 with token, or 401/500 error)
  */
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
     try {
         if (!authService) {
             return res.status(503).json({ message: 'Authentication service is currently unavailable.' });
@@ -47,7 +47,7 @@ exports.login = async (req, res) => {
 
         return res.status(200).json({ token, userId: user.id });
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        return next(error);
     }
 };
 
@@ -56,7 +56,7 @@ exports.login = async (req, res) => {
  * Purpose: Handles new user registration, hashes the password, and returns a JWT.
  * Data Flow: Request Body (name, email, password) -> validation -> authService.findUserByEmail -> bcrypt.hash -> authService.createUser -> Response (200 with token, or 400/409/500 error)
  */
-exports.register = async (req, res) => {
+exports.register = async (req, res, next) => {
     try {
         if (!authService) {
             return res.status(503).json({ message: 'Authentication service is currently unavailable.' });
@@ -90,6 +90,6 @@ exports.register = async (req, res) => {
         };
         return res.status(200).json(responseData);
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        return next(error);
     }
 };

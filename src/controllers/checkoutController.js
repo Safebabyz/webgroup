@@ -39,7 +39,7 @@ function formatConflictTitles(titles) {
  * Purpose: Handles the checkout process, verifying course availability, checking schedule conflicts, creating the booking, and updating capacities within a transaction.
  * Data Flow: Request Body (userId, courses, totalAmount) -> checkoutService (Transaction, Check Capacity, Create Booking, Add Items, Update Capacity) -> Response (201 with booking details, or 400/404/409/500 error)
  */
-exports.processCheckout = async (req, res) => {
+exports.processCheckout = async (req, res, next) => {
     if (!checkoutService) {
         return res.status(503).json({ message: 'Checkout service is currently unavailable.' });
     }
@@ -135,7 +135,7 @@ exports.processCheckout = async (req, res) => {
             });
         }
 
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
@@ -144,7 +144,7 @@ exports.processCheckout = async (req, res) => {
  * Purpose: Retrieves all bookings for a given user.
  * Data Flow: Request Params (userId) -> checkoutService.getUserBookings -> Response (200 with bookings array, or 400/500 error)
  */
-exports.getUserBookings = async (req, res) => {
+exports.getUserBookings = async (req, res, next) => {
     try {
         const { userId } = req.params;
 
@@ -158,6 +158,6 @@ exports.getUserBookings = async (req, res) => {
         const bookings = await checkoutService.getUserBookings(userId);
         res.status(200).json(bookings);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };

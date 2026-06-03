@@ -15,3 +15,5 @@ theme
 
 # --- SQLite database (contains real user data) ---
 data/database.sqlite
+*.db
+*.sqlite

@@ -14,7 +14,7 @@ try {
  * Purpose: Handles the request to fetch all courses.
  * Data Flow: Calls courseService.getAllCourses() to fetch data from DB. Returns a 200 JSON response with the courses array, or 404 if none found.
  */
-exports.getCourses = async (req, res) => {
+exports.getCourses = async (req, res, next) => {
     try {
         if (!courseService) {
             return res.status(503).json({ message: 'Course service is currently unavailable.' });
@@ -27,6 +27,6 @@ exports.getCourses = async (req, res) => {
         
         res.status(200).json(courses);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };

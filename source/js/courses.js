@@ -503,7 +503,7 @@
     if (!resultsEl) return;
     showLoading();
 
-    fetch('http://localhost:8000/api/courses')
+    fetch(`${window.ENV.API_BASE_URL}/api/courses`)
       .then(async function (response) {
         if (!response.ok) {
           var errorData = await response.json().catch(function () { return {}; });

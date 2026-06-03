@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-const dbPath = path.resolve(__dirname, '../../data/database.sqlite');
+const dbPath = process.env.DB_PATH ? path.resolve(process.cwd(), process.env.DB_PATH) : path.resolve(__dirname, '../../data/database.sqlite');
 const db = new sqlite3.Database(dbPath);
 
 // Remove duplicate email records before enforcing a unique email index.

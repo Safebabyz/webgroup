@@ -343,7 +343,7 @@
       var email = (document.getElementById('co-email') || {}).value || '';
 
       // Call backend API to create booking (use backend server port)
-      var apiUrl = 'http://localhost:8000/api/checkout/process';
+      var apiUrl = `${window.ENV.API_BASE_URL}/api/checkout/process`;
       fetch(apiUrl, {
         method: 'POST',
         headers: Object.assign({ 'Content-Type': 'application/json' }, (localStorage.getItem('authToken') ? { 'Authorization': 'Bearer ' + localStorage.getItem('authToken') } : {})),

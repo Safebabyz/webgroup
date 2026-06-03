@@ -28,7 +28,7 @@
   }
 
   function fetchLatestCourses() {
-    return fetch('http://localhost:8000/api/courses')
+    return fetch(`${window.ENV.API_BASE_URL}/api/courses`)
       .then(function (response) {
         if (!response.ok) throw new Error('Unable to load course data');
         return response.json();
