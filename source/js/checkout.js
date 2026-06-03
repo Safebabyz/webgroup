@@ -65,6 +65,31 @@
            Number(b.current_capacity) >= Number(b.max_capacity);
   }
 
+  function parseMinutes(time) {
+    if (!time) return null;
+    var parts = String(time).split(':').slice(0, 2);
+    var hour = Number(parts[0]);
+    var minute = Number(parts[1] || 0);
+    if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+    return hour * 60 + minute;
+  }
+
+  function timesOverlap(startA, endA, startB, endB) {
+    var a = parseMinutes(startA);
+    var b = parseMinutes(endA);
+    var c = parseMinutes(startB);
+    var d = parseMinutes(endB);
+    if (a === null || b === null || c === null || d === null) return false;
+    return a < d && c < b;
+  }
+
+  function formatConflictTitles(titles) {
+    if (!titles || !titles.length) return '';
+    if (titles.length === 1) return titles[0];
+    if (titles.length === 2) return titles[0] + ' and ' + titles[1];
+    return titles.slice(0, -1).join(', ') + ', and ' + titles[titles.length - 1];
+  }
+
   function showCheckoutAlert(msg, type) {
     if (!checkoutAlert) return;
     checkoutAlert.className = 'checkout-alert-' + type;
@@ -113,6 +138,44 @@
       }
       showCheckoutAlert(
         'All selected courses are currently full. Please remove them from your list before checkout.',
+        'warning'
+      );
+      if (checkoutModal) {
+        checkoutModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+      return;
+    }
+
+    // 3.5) ตรวจ schedule conflicts ใน availableCourses
+    var scheduleConflicts = [];
+    for (var i = 0; i < availableCourses.length; i++) {
+      for (var j = i + 1; j < availableCourses.length; j++) {
+        var a = availableCourses[i];
+        var b = availableCourses[j];
+        if (a.course_date && b.course_date && a.course_date === b.course_date) {
+          if (timesOverlap(a.start_time, a.end_time, b.start_time, b.end_time)) {
+            scheduleConflicts.push(a.title);
+            scheduleConflicts.push(b.title);
+          }
+        }
+      }
+    }
+
+    if (scheduleConflicts.length > 0) {
+      if (checkoutForm) {
+        checkoutForm.reset();
+        checkoutForm.style.display = 'none';
+      }
+      if (checkoutSubmitBtn) {
+        checkoutSubmitBtn.disabled = true;
+      }
+      var uniqueConflicts = scheduleConflicts.filter(function (value, index, self) {
+        return self.indexOf(value) === index;
+      });
+      var conflictTitles = formatConflictTitles(uniqueConflicts);
+      showCheckoutAlert(
+        'Schedule conflict detected among your available courses: ' + conflictTitles + '. Please remove overlapping courses before checkout.',
         'warning'
       );
       if (checkoutModal) {
