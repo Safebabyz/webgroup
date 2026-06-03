@@ -5,10 +5,20 @@
   "author": "Themefisher",
   "license": "MIT",
   "scripts": {
+    "start": "node src/app.js",
     "dev": "concurrently \"gulp\" \"node src/app.js\"",
+    "dev:watch": "concurrently \"gulp\" \"nodemon src/app.js\"",
+    "test": "jest --forceExit --detectOpenHandles --verbose",
+    "test:coverage": "jest --forceExit --detectOpenHandles --coverage",
     "build": "gulp build",
     "download": "gulp download",
     "deploy": "gulp deploy"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/tests/**/*.test.js"],
+    "testTimeout": 15000,
+    "verbose": true
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -34,6 +44,8 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
-    "nodemon": "^3.1.14"
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
   }
 }

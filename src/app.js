@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 // Defensive startup checks
 if (!process.env.JWT_SECRET) {
@@ -18,6 +19,9 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, '../theme')));
 
 // Basic route
 app.get('/api', (req, res) => {

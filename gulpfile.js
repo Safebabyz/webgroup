@@ -34,7 +34,7 @@ var path = {
 // HTML
 gulp.task("html", function () {
   return gulp
-    .src(path.src.html)
+    .src(path.src.html, { allowEmpty: true })
     .pipe(
       fileinclude({
         basepath: path.src.incdir,
@@ -62,7 +62,7 @@ gulp.task("html", function () {
 // SCSS
 gulp.task("scss", function () {
   return gulp
-    .src(path.src.scss)
+    .src(path.src.scss, { allowEmpty: true })
     .pipe(sourcemaps.init())
     .pipe(
       sass({
@@ -88,13 +88,13 @@ gulp.task("scss", function () {
 });
 
 gulp.task("scss-files", function () {
-  return gulp.src(path.src.scss).pipe(gulp.dest(path.build.dir + "scss/"));
+  return gulp.src(path.src.scss, { allowEmpty: true }).pipe(gulp.dest(path.build.dir + "scss/"));
 });
 
 // Javascript
 gulp.task("js", function () {
   return gulp
-    .src(path.src.js)
+    .src(path.src.js, { allowEmpty: true })
     .pipe(jshint("./.jshintrc"))
     .pipe(jshint.reporter("jshint-stylish"))
     .on("error", function (err) {
@@ -120,7 +120,7 @@ gulp.task("js", function () {
 // Image blur
 gulp.task("images-blur", function () {
   return gulp
-    .src(path.src.blur, { encoding: false })
+    .src(path.src.blur, { encoding: false, allowEmpty: true })
     .pipe(
       gm(function (gmfile) {
         return gmfile.blur(10, 10);
@@ -132,7 +132,7 @@ gulp.task("images-blur", function () {
 // image build
 gulp.task("images", function () {
   return gulp
-    .src(path.src.images, { encoding: false })
+    .src(path.src.images, { encoding: false, allowEmpty: true })
     .pipe(gulp.dest(path.build.dir + "images/"))
     .pipe(
       bs.reload({
@@ -144,7 +144,7 @@ gulp.task("images", function () {
 // fonts
 gulp.task("fonts", function () {
   return gulp
-    .src(path.src.fonts, { encoding: false })
+    .src(path.src.fonts, { encoding: false, allowEmpty: true })
     .pipe(gulp.dest(path.build.dir + "fonts/"))
     .pipe(
       bs.reload({
@@ -156,7 +156,7 @@ gulp.task("fonts", function () {
 // Plugins
 gulp.task("plugins", function () {
   return gulp
-    .src(path.src.plugins)
+    .src(path.src.plugins, { allowEmpty: true })
     .pipe(gulp.dest(path.build.dir + "plugins/"))
     .pipe(
       bs.reload({
@@ -167,7 +167,7 @@ gulp.task("plugins", function () {
 
 // static files
 gulp.task("static", function () {
-  return gulp.src(path.src.static).pipe(gulp.dest(path.build.dir));
+  return gulp.src(path.src.static, { allowEmpty: true }).pipe(gulp.dest(path.build.dir));
 });
 
 // Clean Theme Folder

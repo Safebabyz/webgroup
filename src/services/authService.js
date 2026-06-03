@@ -4,19 +4,8 @@ const path = require('path');
 const dbPath = process.env.DB_PATH ? path.resolve(process.cwd(), process.env.DB_PATH) : path.resolve(__dirname, '../../data/database.sqlite');
 const db = new sqlite3.Database(dbPath);
 
-// Remove duplicate email records before enforcing a unique email index.
-db.serialize(() => {
-    db.run(
-        `DELETE FROM users
-         WHERE id NOT IN (
-             SELECT MIN(id)
-             FROM users
-             GROUP BY LOWER(email)
-         )`
-    );
-
-    db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_unique ON users(email COLLATE NOCASE)`);
-});
+// NOTE: UNIQUE COLLATE NOCASE บน email ถูกกำหนดไว้ใน data/schema.sql แล้ว
+// ไม่จำเป็นต้องสร้าง index ที่นี่อีก
 
 /**
  * Function: findUserByEmail
