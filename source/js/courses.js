@@ -159,72 +159,6 @@
 
     resultsEl.innerHTML = page.map(renderCard).join('');
 
-    resultsEl.querySelectorAll('.enroll-btn').forEach(function (btn) {
-      btn.addEventListener('click', function (e) {
-        e.preventDefault();
-        var courseId = this.getAttribute('data-course-id');
-        var course = state.all.find(function (c) { return c.id == courseId; });
-        if (!course) return;
-
-        // ── เช็คว่า login อยู่ไหม ──
-        var token = localStorage.getItem('authToken');
-        if (!token) {
-          // ยังไม่ login → เปิด login modal
-          var loginModal = document.getElementById('loginModal');
-          if (loginModal && window.jQuery) {
-            window.jQuery('#loginModal').modal('show');
-          } else if (loginModal) {
-            loginModal.style.display = 'flex';
-          }
-          // แสดง toast แจ้งเตือน
-          showBookingToast('Please login to enroll in a course.', 'warning');
-          return;
-        }
-
-        // ── login แล้ว → บันทึกลง bookingList ──
-        var bookings = getBookings();
-        var alreadyBooked = bookings.some(function (b) { return b.id == course.id; });
-        if (alreadyBooked) {
-          showBookingToast('You have already enrolled in "' + course.title + '".', 'info');
-          return;
-        }
-
-        var validation = validateBooking(course, bookings);
-        if (validation) {
-          var message = validation.message;
-          if (validation.reason === 'schedule' && validation.conflicts && validation.conflicts.length) {
-            message = 'This course conflicts with ' + formatConflictTitles(validation.conflicts) + '.';
-          }
-          showBookingToast(message, 'danger');
-          console.warn('Booking conflict:', validation);
-          return;
-        }
-
-        bookings.push({
-          id:               course.id,
-          title:            course.title,
-          category:         course.category || 'General',
-          price:            course.price || 0,
-          image_url:        course.image_url || 'images/courses/course-1.jpg',
-          course_date:      course.course_date || '',
-          start_time:       course.start_time || '',
-          end_time:         course.end_time || '',
-          max_capacity:     course.max_capacity || null,
-          current_capacity: course.current_capacity || null,
-          description:      course.description || '',
-          enrolledAt:       new Date().toISOString()
-        });
-        saveBookings(bookings);
-
-        // อัปเดตปุ่มและ badge
-        this.innerHTML = '<i class="ti-check mr-1"></i>Enrolled';
-        this.disabled = true;
-        this.classList.replace('btn-primary', 'btn-success');
-        updateBookingBadge();
-        showBookingToast('"' + course.title + '" added to your bookings!', 'success');
-      });
-    });
-
     // ── อัปเดตสถานะปุ่มที่ enroll แล้ว ──
     var bookings = getBookings();
     var bookedIds = bookings.map(function (b) { return String(b.id); });
@@ -521,6 +455,68 @@
 
   searchBtn.addEventListener('click', function () { state.query = searchInput.value; applyFilters(); });
   searchInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { state.query = searchInput.value; applyFilters(); } });
+
+  // ── Event Delegation: Enroll button (listener ตัวเดียวสำหรับทุกปุ่ม ไม่สร้างใหม่ทุก render) ──
+  resultsEl.addEventListener('click', function (e) {
+    var btn = e.target.closest('.enroll-btn');
+    if (!btn || btn.disabled) return;
+    e.preventDefault();
+
+    var courseId = btn.getAttribute('data-course-id');
+    var course = state.all.find(function (c) { return c.id == courseId; });
+    if (!course) return;
+
+    var token = localStorage.getItem('authToken');
+    if (!token) {
+      var loginModal = document.getElementById('loginModal');
+      if (loginModal && window.jQuery) {
+        window.jQuery('#loginModal').modal('show');
+      } else if (loginModal) {
+        loginModal.style.display = 'flex';
+      }
+      showBookingToast('Please login to enroll in a course.', 'warning');
+      return;
+    }
+
+    var bookings = getBookings();
+    var alreadyBooked = bookings.some(function (b) { return b.id == course.id; });
+    if (alreadyBooked) {
+      showBookingToast('You have already enrolled in "' + course.title + '".', 'info');
+      return;
+    }
+
+    var validation = validateBooking(course, bookings);
+    if (validation) {
+      var message = validation.message;
+      if (validation.reason === 'schedule' && validation.conflicts && validation.conflicts.length) {
+        message = 'This course conflicts with ' + formatConflictTitles(validation.conflicts) + '.';
+      }
+      showBookingToast(message, 'danger');
+      return;
+    }
+
+    bookings.push({
+      id:               course.id,
+      title:            course.title,
+      category:         course.category || 'General',
+      price:            course.price || 0,
+      image_url:        course.image_url || 'images/courses/course-1.jpg',
+      course_date:      course.course_date || '',
+      start_time:       course.start_time || '',
+      end_time:         course.end_time || '',
+      max_capacity:     course.max_capacity || null,
+      current_capacity: course.current_capacity || null,
+      description:      course.description || '',
+      enrolledAt:       new Date().toISOString()
+    });
+    saveBookings(bookings);
+
+    btn.innerHTML = '<i class="ti-check mr-1"></i>Enrolled';
+    btn.disabled = true;
+    btn.classList.replace('btn-primary', 'btn-success');
+    updateBookingBadge();
+    showBookingToast('"' + course.title + '" added to your bookings!', 'success');
+  });
   var debounce;
   searchInput.addEventListener('input', function () {
     clearTimeout(debounce);

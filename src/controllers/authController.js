@@ -11,8 +11,9 @@ try {
     }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+// JWT_SECRET ต้องมาจาก .env เท่านั้น — app.js ตรวจสอบไว้แล้วตอน startup
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
 
@@ -82,7 +83,6 @@ exports.register = async (req, res, next) => {
         const newUser = await authService.createUser(name, email, passwordHash);
 
         const token = jwt.sign({ id: newUser.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-        console.log('DEBUG register response', { email, newUserId: newUser.id, token });
         const responseData = {
             message: 'Registration successful.',
             token: token,

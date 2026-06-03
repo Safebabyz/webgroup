@@ -46,7 +46,9 @@ exports.processCheckout = async (req, res, next) => {
     let transactionStarted = false;
 
     try {
-        const { userId, courses, totalAmount } = req.body;
+        // userId ดึงจาก JWT ที่ผ่านการตรวจสอบแล้ว (ไม่รับจาก client โดยตรง)
+        const userId = req.user.id;
+        const { courses } = req.body;
 
         if (!userId || !courses || courses.length === 0) {
             return res.status(400).json({ message: 'Missing required checkout information.' });
@@ -105,6 +107,11 @@ exports.processCheckout = async (req, res, next) => {
             });
         }
 
+        // คำนวณ totalAmount จากราคาจริงใน DB (courseSnapshots) ไม่ใช่ราคาที่ client ส่งมา
+        // นี่คือหลัก Gatekeeper Pattern — ไม่ไว้ใจตัวเลขจาก client เด็ดขาด
+        const totalAmount = courseSnapshots.reduce(function (sum, c) {
+            return sum + (Number(c.price) || 0);
+        }, 0);
         const booking = await checkoutService.createBooking(userId, totalAmount);
         await checkoutService.addBookingItems(booking.id, courseSnapshots);
 
